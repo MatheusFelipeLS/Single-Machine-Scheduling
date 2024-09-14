@@ -1,2 +1,3 @@
 *.pdf
 sm
+tests.cpp
