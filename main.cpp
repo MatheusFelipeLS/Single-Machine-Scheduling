@@ -8,6 +8,15 @@ struct Solution {
   vector<int> sequence;
 };
 
+struct Data {
+  int qtOrders;
+  vector<int> productionTimes;
+  vector<int> deadlines;
+  vector<int> penalties;
+  vector<vector<int>> switchingCostMatrix;
+};
+
+
 void showSolution(vector<int> &s) {
   cout << "Solução:\n";
   int i;
@@ -18,32 +27,53 @@ void showSolution(vector<int> &s) {
   cout << s[i] << endl;
 }
 
-int calcularCustoTotal(vector<int> &s, vector<int> &productionTimes, vector<int> &deadlines, vector<int> &penalties, vector<vector<int>> &switchingCostMatrix) {
-  int tempoTotal = productionTimes[s[0]];
-  int multa = max(0, penalties[s[0]] * (productionTimes[s[0]] - deadlines[s[0]]));
-  
-  for(int i = 1; i < s.size(); i++) {
-    multa += max(0, penalties[s[i]] * (productionTimes[s[i]] + tempoTotal + switchingCostMatrix[s[i-1]][s[i]] - deadlines[s[i]]));
-    tempoTotal += productionTimes[s[i]] + switchingCostMatrix[s[i-1]][s[i]];
+
+vector<int> calculateTimes(Data *data, vector<int> &s, int start, vector<int> &times) {
+  int currentTime;
+  if(start == 0) {
+    currentTime = data->productionTimes[s[0]];
+    times[0] = currentTime;
+    start += 1;
+  } else {
+    currentTime = times[start-1];
   }
 
-  return multa;
+  for(int i = start; i < data->qtOrders; i++) {
+    times[i] = currentTime; 
+    currentTime += data->productionTimes[s[i]] + data->switchingCostMatrix[s[i-1]][s[i]];
+  }
+
+  return times;
 }
 
-Solution O_GANANCIOSO(int qtOrders, vector<int> &productionTimes, vector<int> &deadlines, vector<int> &penalties, vector<vector<int>> &switchingCostMatrix) {
+
+int calculatePenalties(vector<int> &s, Data *data) {
+  vector<int> times(data->qtOrders);
+  times = calculateTimes(data, s, 0, times);
+  int penalty = max(0, data->penalties[s[0]] * (data->productionTimes[s[0]] - data->deadlines[s[0]]));
+  
+  for(int i = 1; i < s.size(); i++) {
+    penalty += max(0, data->penalties[s[i]] * (data->productionTimes[s[i]] + times[i] + data->switchingCostMatrix[s[i-1]][s[i]] - data->deadlines[s[i]]));
+  }
+
+  return penalty;
+}
+
+
+Solution O_GANANCIOSO(Data *data) {
   Solution s;
-  vector<int> CL(qtOrders);
+  vector<int> CL(data->qtOrders);
 
   for(int i = 0; i < CL.size(); i++) CL[i] = i;
 
-  vector<int> exchangeInterval(qtOrders);
+  vector<int> exchangeInterval(data->qtOrders);
   int currentTime = 0;
   while(!CL.empty()) {
     vector<int> scores(CL.size());
 
     int i = 0;
     do {
-      double score = penalties[CL[i]] * (productionTimes[CL[i]] + exchangeInterval[CL[i]] + currentTime - deadlines[CL[i]]);
+      double score = data->penalties[CL[i]] * (data->productionTimes[CL[i]] + exchangeInterval[CL[i]] + currentTime - data->deadlines[CL[i]]);
       scores[i] = score;
       i++;
     } while(i < CL.size());
@@ -54,24 +84,71 @@ Solution O_GANANCIOSO(int qtOrders, vector<int> &productionTimes, vector<int> &d
     }
 
     s.sequence.push_back(CL[idxBest]);
-    currentTime += exchangeInterval[idxBest] + productionTimes[idxBest];
-    exchangeInterval = switchingCostMatrix[s.sequence[s.sequence.size()-1]];
+    currentTime += exchangeInterval[idxBest] + data->productionTimes[idxBest];
+    exchangeInterval = data->switchingCostMatrix[s.sequence[s.sequence.size()-1]];
     CL.erase(CL.begin() + idxBest);
   }
-
-  s.penalty = calcularCustoTotal(s.sequence, productionTimes, deadlines, penalties, switchingCostMatrix);
 
   return s;
 }
 
+
+bool Swap(Data*data, Solution *s) {
+  int best_i = 0;
+  int best_j = 0;
+  int bestValue = 0;
+  vector<int> times(data->qtOrders);
+
+  for(int i = 0; i < data->qtOrders-1; i++) {
+    for(int j = i+1; j < data->qtOrders; j++) {
+      vector<int> aux = s->sequence;
+
+      swap(aux[i], aux[j]);
+
+      int value = calculatePenalties(aux, data) - s->penalty;
+      if(value < bestValue) {
+        best_i = i;
+        best_j = j;
+        bestValue = value;
+      }
+    }
+  }
+
+  if(bestValue < 0) {
+    swap(s->sequence[best_i], s->sequence[best_j]);
+    return true;
+  }
+
+
+  return false;
+}
+
+
+void BuscaLocal(Data *data, Solution *s) {
+  vector<int> n = {0};
+
+  while(!n.empty()) {
+    int x = rand() % n.size();
+    switch (x) {
+      case 0:
+        Swap(data, s);
+        break; 
+    }
+    n.erase(n.begin()+x);
+  }
+}
+
+
 int main() {
-  int qtOrders = 5;
+  Data data;
+  srand(time(NULL));
+  data.qtOrders = 5;
 
-  vector<int> productionTimes = {15, 25, 20, 30, 20};
-  vector<int> deadlines = {25, 45, 75, 120, 135};
-  vector<int> penalties = {10, 12, 30, 15, 10};
+  data.productionTimes = {15, 25, 20, 30, 20};
+  data.deadlines = {25, 45, 75, 120, 135};
+  data.penalties = {10, 12, 30, 15, 10};
 
-  vector<vector<int>> switchingCostMatrix = {
+  data.switchingCostMatrix = {
     {0, 10, 15, 8, 21},
     {10, 0, 10, 13, 9},
     {17, 9, 0, 10, 14},
@@ -80,8 +157,10 @@ int main() {
   };
 
   Solution s;
-
-  s = O_GANANCIOSO(qtOrders, productionTimes, deadlines, penalties, switchingCostMatrix);
+  s = O_GANANCIOSO(&data);
+  s.penalty = calculatePenalties(s.sequence, &data);
+  
+  BuscaLocal(&data, &s);
 
   showSolution(s.sequence);
   cout << "Multa: " << s.penalty << endl; 

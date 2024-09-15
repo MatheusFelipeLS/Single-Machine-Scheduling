@@ -1,3 +1,5 @@
 *.pdf
 sm
 tests.cpp
+in_generator.cpp
+ig
