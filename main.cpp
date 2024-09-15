@@ -129,12 +129,17 @@ void BuscaLocal(Data *data, Solution *s) {
 
   while(!n.empty()) {
     int x = rand() % n.size();
+    bool improvement;
     switch (x) {
       case 0:
-        Swap(data, s);
+        improvement = Swap(data, s);
         break; 
     }
-    n.erase(n.begin()+x);
+    if(improvement) {
+      n = {0};
+    } else {
+      n.erase(n.begin()+x);
+    }
   }
 }
 
