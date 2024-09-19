@@ -17,6 +17,7 @@ void Data::readFromFile(const std::string& filename) {
     times.resize(qtOrders);
     deadlines.resize(qtOrders);
     penalties.resize(qtOrders);
+    initialPreparationTime.resize(qtOrders);
     switchingTimeMatrix.resize(qtOrders, std::vector<int>(qtOrders));
 
     // Lendo os times
@@ -32,6 +33,10 @@ void Data::readFromFile(const std::string& filename) {
     // Lendo os custos
     for (int i = 0; i < qtOrders; i++) {
         file >> penalties[i];
+    }
+
+    for (int i = 0; i < qtOrders; i++) {
+        file >> initialPreparationTime[i];
     }
 
     // Lendo a matriz de times de troca
@@ -56,8 +61,16 @@ const std::vector<int>& Data::getDeadlines() const {
     return this->deadlines;
 }
 
+const std::vector<int>& Data::getInitialPreparationTime() const {
+    return this->initialPreparationTime;
+}
+
 const std::vector<int>& Data::getPenalties() const {
     return this->penalties;
+}
+
+const int Data::initialTime(int pos) const {
+    return initialPreparationTime[pos];
 }
 
 const std::vector<std::vector<int>>& Data::getSwitchingTimeMatrix() const {

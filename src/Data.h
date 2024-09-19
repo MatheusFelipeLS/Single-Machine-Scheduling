@@ -10,6 +10,7 @@ private:
     std::vector<int> times;
     std::vector<int> deadlines;
     std::vector<int> penalties;
+    std::vector<int> initialPreparationTime;
     std::vector<std::vector<int>> switchingTimeMatrix;
 
 public:
@@ -21,9 +22,11 @@ public:
     const std::vector<int>& getTimes() const;
     const std::vector<int>& getDeadlines() const;
     const std::vector<int>& getPenalties() const;
+    const std::vector<int>& getInitialPreparationTime() const;
     const std::vector<std::vector<int>>& getSwitchingTimeMatrix() const;
 
     const std::vector<int>& getSwitchingTimeVector(int pos) const;
+    const int initialTime(int pos) const;
     const int time(int pos) const;
     const int deadline(int pos) const;
     const int penalty(int pos) const;
