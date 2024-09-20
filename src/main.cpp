@@ -1,6 +1,9 @@
 #include <iostream>
 #include <algorithm>    
 #include <vector>
+#include <limits>
+#include <cmath>
+#include <bits/stdc++.h>
 
 #include "Data.h"
 
@@ -10,6 +13,11 @@ struct Solution {
   vector<int> sequence;
   vector<int> times;
   vector<int> penalty;
+};
+
+struct Result {
+  vector<int> sequence;
+  int penalty;
 };
 
 void showSolution(Solution *s) {
@@ -22,6 +30,15 @@ void showSolution(Solution *s) {
   for(int i = 0; i < (int) s->penalty.size(); i++) cout << s->penalty[i] << " ";
   cout << endl;
 }
+
+void showResult(Solution *s) {
+  for(int i = 0; i < (int) s->sequence.size(); i++) {
+    cout << s->sequence[i] << " ";
+  }
+
+  cout << "\nCusto: " << s->penalty[s->penalty.size()-1] << "\n\n";
+}
+
 
 void calculateTimes(Data *data, Solution *s) {
   int currentTime = data->time(s->sequence[0]) + data->initialTime(s->sequence[0]);
@@ -210,7 +227,7 @@ bool Rotate(Data*data, Solution *s) {
 }
 
 
-bool Reinsertion(Data*data, Solution *s) {
+bool Reinsertion(Data*data, Solution *s, int range) {
   int best_i = 0;
   int best_j = 0;
   int bestDelta = 0;
@@ -222,11 +239,10 @@ bool Reinsertion(Data*data, Solution *s) {
       myints[k] = s->sequence[k];
   }
 
-  for(int i = 0; i < data->getQtOrders(); i++) {
-    Solution aux = *s;
-
-    for(int j = i+2; j < data->getQtOrders(); j++) {
-      rotate(aux.sequence.begin() + i, aux.sequence.begin() + i + 1, aux.sequence.begin() + j);
+  for(int i = 0; i < data->getQtOrders()-range; i++) {
+    for(int j = i+range+1; j < data->getQtOrders(); j++) {
+      Solution aux = *s;
+      rotate(aux.sequence.begin() + i, aux.sequence.begin() + i + range, aux.sequence.begin() + j);
 
       recalculateTimes(data, &aux, i);
       recalculatePenalties(data, &aux, i);
@@ -241,8 +257,9 @@ bool Reinsertion(Data*data, Solution *s) {
       }
     }
 
-    for(int j = i-1; j >= 0; j--) {
-      rotate_copy(myints + j, myints + i, myints + i + 1, aux.sequence.begin() + j);
+    for(int j = i-range; j >= 0; j--) {
+      Solution aux = *s;
+      rotate_copy(myints + j, myints + i, myints + i + range, aux.sequence.begin() + j);
 
       recalculateTimes(data, &aux, j);
       recalculatePenalties(data, &aux, j);
@@ -260,9 +277,9 @@ bool Reinsertion(Data*data, Solution *s) {
 
   if(bestDelta < 0) {
     if(best_i > best_j) {
-      rotate_copy(myints + best_j, myints + best_i, myints + best_i + 1, s->sequence.begin() + best_j);
+      rotate_copy(myints + best_j, myints + best_i, myints + best_i + range, s->sequence.begin() + best_j);
     } else {
-      rotate(s->sequence.begin() + best_i, s->sequence.begin() + best_i + 1, s->sequence.begin() + best_j);
+      rotate(s->sequence.begin() + best_i, s->sequence.begin() + best_i + range, s->sequence.begin() + best_j);
     }
 
     s->times = bestTimes;
@@ -275,51 +292,126 @@ bool Reinsertion(Data*data, Solution *s) {
 
 
 void BuscaLocal(Data *data, Solution *s) {
-  vector<int> n = {0, 1, 2};
-
+  vector<int> n = {1, 2, 3, 4, 5};
   while(!n.empty()) {
     int x = rand() % n.size();
     bool improvement;
     switch (n[x]) {
-      case 0:
+      case 1:
         improvement = Swap(data, s);
         break; 
-      case 1:
+      case 2:
         improvement = Rotate(data, s);
         break; 
-      case 2:
-        improvement = Reinsertion(data, s);
+      case 3:
+        improvement = Reinsertion(data, s, 1);
+        break; 
+      case 4:
+        improvement = Reinsertion(data, s, 2);
+        break; 
+      case 5:
+        improvement = Reinsertion(data, s, 3);
         break; 
     }
     if(improvement) {
-      n = {0, 1, 2};
+      if(!s->penalty[s->penalty.size()-1]) return;
+      n = {1, 2, 3, 4, 5};
     } else {
       n.erase(n.begin()+x);
     }
   }
 }
 
+template<typename IT>
+void swap_ranges(IT start_a, IT end_a, IT start_b, IT end_b) {
+    auto it = std::rotate(start_a, start_b, end_b);
+    auto new_start_a = (end_a - start_a) + it;
+    std::rotate(it, new_start_a, end_b);
+}
+
+void Perturbacao(Data *data, Solution *s) {
+  int tamMax = (int) data->getQtOrders() / 10;
+
+  int bloco1 = rand() % (tamMax -1) + 2;
+  int bloco2 = rand() % (tamMax -1) + 2;
+
+  int inicioDoBloco2 = (rand() % (N - bloco2 - bloco1)) + bloco1 +1;
+  int inicioDoBloco1 = rand() % (inicioDoBloco2 - bloco1);
+
+  swap_ranges(
+    s->sequence.begin() + inicioDoBloco1, 
+    s->sequence.begin() + inicioDoBloco1 + bloco1, 
+    s->sequence.begin() + inicioDoBloco2, 
+    s->sequence.begin() + inicioDoBloco2 + bloco2 
+  );
+
+  recalculateTimes(data, s, inicioDoBloco1);
+  recalculatePenalties(data, s, inicioDoBloco1);
+}
+
+Result ILS(Data *data, int max_iter) {
+  size_t n = data->getQtOrders();
+
+  Result bestSolution;
+  bestSolution.penalty = numeric_limits<int>::max();
+  
+  int maxIterIls = n/2;
+  if(n >= 150) 
+    maxIterIls /= 2;
+
+  for(int i = 0; i < max_iter; i++) {
+    Solution s = Guloso(data);
+    Solution best = s;
+    int iterILS = 0;
+    while(iterILS <= maxIterIls) {
+      BuscaLocal(data, &s);
+      if(s.penalty[s.penalty.size()-1] < best.penalty[best.penalty.size()-1]) {
+        best = s;
+        iterILS = 0;
+      }
+      Perturbacao(data, &s);
+      iterILS++;
+    }
+
+    if(best.penalty[best.penalty.size()-1] < bestSolution.penalty) {
+      bestSolution.sequence = best.sequence;
+      bestSolution.penalty = best.penalty[best.penalty.size()-1];
+    }
+  }
+	return bestSolution;
+}
+
 int main(int argc, char* argv[]) {
   if (argc < 2) {
-    std::cerr << "Uso: " << argv[0] << " <nome_do_arquivo>\n";
+    std::cerr << "Uso: " << argv[0] << "<caminho_do_arquivo>\n";
     return 1;
   }
 
+  time_t start, end;
+  double media = 0;
+  start = clock();
   srand(time(NULL));
-  Data data;
+  ios_base::sync_with_stdio(false);
 
-  data.readFromFile(argv[1]);
 
-  Solution s;
+  for(int cont = 0; cont < 10; cont++) {
+    Data data;
 
-  // s = Guloso(&data);
-  s = Guloso_ruim(&data);
-  showSolution(&s);
-  cout << "GULOSO\n";
-  cout << endl;
-  BuscaLocal(&data, &s);
+    data.readFromFile(argv[1]);
 
-  showSolution(&s);
+    Result r;
+    r = ILS(&data, 20);
+
+    media += r.penalty;
+  }
+
+
+  cout << "cost médio: " << media/10;
+  end = clock();
+      double time_taken = double(end - start) / double(CLOCKS_PER_SEC);
+      cout << "; Tempo médio: " << fixed 
+          << time_taken/10 << setprecision(5);
+      cout << " sec " << endl;
 
   return 0;
 }
