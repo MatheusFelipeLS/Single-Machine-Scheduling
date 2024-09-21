@@ -61,6 +61,21 @@ void calculatePenalties(Data *data, Solution *s) {
 }
 
 
+void createSolution(Data *data, Solution *s) {
+  int i;
+  // int penalty = 0;
+  int currentTime = data->time(s->sequence[0]) + data->initialTime(s->sequence[0]);
+
+  s->times[0] = currentTime;
+  s->penalty[0] = max(0, data->penalty(s->sequence[0]) * (s->times[0] - data->deadline(s->sequence[0])));
+  for(i = 1; i < (int) data->getQtOrders(); i++) {
+    currentTime = s->times[i-1] + data->time(s->sequence[i]) + data->switchTime(s->sequence[i-1], s->sequence[i]);
+    s->times[i] = currentTime;
+    s->penalty[i] = s->penalty[i-1] + max(0, data->penalty(s->sequence[i]) * (s->times[i] - data->deadline(s->sequence[i]))); 
+  }
+}
+
+
 Solution Guloso(Data *data) {
   Solution s;
   s.times = vector<int>(data->getQtOrders());
@@ -92,8 +107,9 @@ Solution Guloso(Data *data) {
     CL.erase(CL.begin() + idxBest);
   }
 
-  calculateTimes(data, &s);
-  calculatePenalties(data, &s);
+  // calculateTimes(data, &s);
+  // calculatePenalties(data, &s);
+  createSolution(data, &s);
 
   return s;
 }
@@ -116,8 +132,9 @@ Solution Guloso_ruim(Data *data) {
     CL.erase(CL.begin()+best);
   }
 
-  calculateTimes(data, &s);
-  calculatePenalties(data, &s);
+  // calculateTimes(data, &s);
+  // calculatePenalties(data, &s);
+  createSolution(data, &s);
 
   return s;
 }
@@ -129,11 +146,13 @@ void recalculateTimes(Data *data, Solution *s, int start) {
   }
 
   int i;
-  int currentTime = s->times[start-1] + data->switchTime(s->sequence[start-1], s->sequence[start]) + data->time(s->sequence[start]);
+  int currentTime;
+  // int currentTime = s->times[start-1] + data->switchTime(s->sequence[start-1], s->sequence[start]) + data->time(s->sequence[start]);
   
-  for(i = start; i < (int) data->getQtOrders()-1; i++) {
+  for(i = start; i < (int) data->getQtOrders(); i++) {
+    // currentTime += data->time(s->sequence[i+1]) + data->switchTime(s->sequence[i], s->sequence[i+1]);
+    currentTime = s->times[i-1] + data->switchTime(s->sequence[i-1], s->sequence[i]) + data->time(s->sequence[i]);
     s->times[i] = currentTime; 
-    currentTime += data->time(s->sequence[i+1]) + data->switchTime(s->sequence[i], s->sequence[i+1]);
   }
 
   s->times[i] = currentTime; 
@@ -144,11 +163,29 @@ void recalculatePenalties(Data *data, Solution *s, int start) {
     calculatePenalties(data, s);
     return;
   }
-  s->penalty[start] = s->penalty[start-1] + max(0, data->penalty(s->sequence[start]) * (s->times[start] - data->deadline(s->sequence[start])));
-
-  for(int i = start+1; i < (int) s->sequence.size(); i++) {
+  for(int i = start; i < (int) s->sequence.size(); i++) {
     s->penalty[i] = s->penalty[i-1] + max(0, data->penalty(s->sequence[i]) * (s->times[i] - data->deadline(s->sequence[i])));
   }
+}
+
+void attSolution(Data *data, Solution *s, int start) {
+  if(!start) {
+    createSolution(data, s);
+    return;
+  }
+
+  int i;
+  int currentTime;
+  // int currentTime = s->times[start-1] + data->switchTime(s->sequence[start-1], s->sequence[start]) + data->time(s->sequence[start]);
+  for(i = start; i < (int) data->getQtOrders(); i++) {
+    // currentTime += data->time(s->sequence[i+1]) + data->switchTime(s->sequence[i], s->sequence[i+1]);
+    currentTime = s->times[i-1] + data->switchTime(s->sequence[i-1], s->sequence[i]) + data->time(s->sequence[i]);
+    s->times[i] = currentTime; 
+    s->penalty[i] = s->penalty[i-1] + max(0, data->penalty(s->sequence[i]) * (s->times[i] - data->deadline(s->sequence[i])));
+  }
+
+  // s->times[i] = currentTime; 
+  // s->penalty[i] = s->penalty[i-1] + max(0, data->penalty(s->sequence[i]) * (s->times[i] - data->deadline(s->sequence[i])));
 }
 
 bool Swap(Data*data, Solution *s) {
@@ -161,11 +198,24 @@ bool Swap(Data*data, Solution *s) {
   for(int i = 0; i < data->getQtOrders()-1; i++) {
     for(int j = i+1; j < data->getQtOrders(); j++) {
       Solution aux = *s;
+      Solution aux2 = *s;
       
       swap(aux.sequence[i], aux.sequence[j]);
+      swap(aux2.sequence[i], aux2.sequence[j]);
 
-      recalculateTimes(data, &aux, i);
-      recalculatePenalties(data, &aux, i);
+      // recalculateTimes(data, &aux2, i);
+      // recalculatePenalties(data, &aux2, i);
+      attSolution(data, &aux, i);
+      // createSolution(data, &aux);
+
+      // if(aux.penalty[aux.penalty.size()-1] != aux2.penalty[aux2.penalty.size()-1]) {
+      //   cout << "i: " << i << " j: " << j << "\naux\n";
+      //   showResult(&aux);
+      //   cout << "aux2\n";
+      //   showResult(&aux2);
+      //   int t;
+      //   cin >> t;
+      // }
 
       int delta = aux.penalty[aux.penalty.size()-1] - initialValue;
       if(delta < bestDelta) {
@@ -202,8 +252,9 @@ bool Rotate(Data*data, Solution *s) {
 
       reverse(aux.sequence.begin()+i, aux.sequence.begin()+j);
 
-      recalculateTimes(data, &aux, i);
-      recalculatePenalties(data, &aux, i);
+      // recalculateTimes(data, &aux, i);
+      // recalculatePenalties(data, &aux, i);
+      attSolution(data, &aux, i);
 
       int delta = aux.penalty[aux.penalty.size()-1] - initialValue;
       if(delta < bestDelta) {
@@ -244,8 +295,9 @@ bool Reinsertion(Data*data, Solution *s, int range) {
       Solution aux = *s;
       rotate(aux.sequence.begin() + i, aux.sequence.begin() + i + range, aux.sequence.begin() + j);
 
-      recalculateTimes(data, &aux, i);
-      recalculatePenalties(data, &aux, i);
+      // recalculateTimes(data, &aux, i);
+      // recalculatePenalties(data, &aux, i);
+      attSolution(data, &aux, i);
 
       int delta = aux.penalty[aux.penalty.size()-1] - initialValue;
       if(delta < bestDelta) {
@@ -261,8 +313,9 @@ bool Reinsertion(Data*data, Solution *s, int range) {
       Solution aux = *s;
       rotate_copy(myints + j, myints + i, myints + i + range, aux.sequence.begin() + j);
 
-      recalculateTimes(data, &aux, j);
-      recalculatePenalties(data, &aux, j);
+      // recalculateTimes(data, &aux, j);
+      // recalculatePenalties(data, &aux, j);
+      attSolution(data, &aux, j);
 
       int delta = aux.penalty[aux.penalty.size()-1] - initialValue;
       if(delta < bestDelta) {
@@ -293,6 +346,7 @@ bool Reinsertion(Data*data, Solution *s, int range) {
 
 void BuscaLocal(Data *data, Solution *s) {
   vector<int> n = {1, 2, 3, 4, 5};
+  // vector<int> n = {1};
   while(!n.empty()) {
     int x = rand() % n.size();
     bool improvement;
@@ -316,6 +370,7 @@ void BuscaLocal(Data *data, Solution *s) {
     if(improvement) {
       if(!s->penalty[s->penalty.size()-1]) return;
       n = {1, 2, 3, 4, 5};
+      // n = {1};
     } else {
       n.erase(n.begin()+x);
     }
@@ -335,7 +390,7 @@ void Perturbacao(Data *data, Solution *s) {
   int bloco1 = rand() % (tamMax -1) + 2;
   int bloco2 = rand() % (tamMax -1) + 2;
 
-  int inicioDoBloco2 = (rand() % (N - bloco2 - bloco1)) + bloco1 +1;
+  int inicioDoBloco2 = (rand() % (data->getQtOrders() - bloco2 - bloco1)) + bloco1 +1;
   int inicioDoBloco1 = rand() % (inicioDoBloco2 - bloco1);
 
   swap_ranges(
@@ -345,8 +400,9 @@ void Perturbacao(Data *data, Solution *s) {
     s->sequence.begin() + inicioDoBloco2 + bloco2 
   );
 
-  recalculateTimes(data, s, inicioDoBloco1);
-  recalculatePenalties(data, s, inicioDoBloco1);
+  // recalculateTimes(data, s, inicioDoBloco1);
+  // recalculatePenalties(data, s, inicioDoBloco1);
+  attSolution(data, s, inicioDoBloco1);
 }
 
 Result ILS(Data *data, int max_iter) {
@@ -355,7 +411,7 @@ Result ILS(Data *data, int max_iter) {
   Result bestSolution;
   bestSolution.penalty = numeric_limits<int>::max();
   
-  int maxIterIls = n/2;
+  int maxIterIls = n/4;
   if(n >= 150) 
     maxIterIls /= 2;
 
@@ -394,24 +450,37 @@ int main(int argc, char* argv[]) {
   ios_base::sync_with_stdio(false);
 
 
-  for(int cont = 0; cont < 10; cont++) {
+  // for(int cont = 0; cont < 10; cont++) {
     Data data;
 
     data.readFromFile(argv[1]);
 
     Result r;
     r = ILS(&data, 20);
-
+    Solution s;
+    s.sequence = r.sequence;
+    s.penalty = vector<int>(s.sequence.size());
+    s.times = vector<int>(s.sequence.size());
+    // createSolution(&data, &s);
+    calculateTimes(&data, &s);
+    calculatePenalties(&data, &s);
     media += r.penalty;
-  }
+  // }
 
-
-  cout << "cost médio: " << media/10;
+  cout << "cost médio: " << media;
+  // cout << "cost médio: " << media/10;
   end = clock();
-      double time_taken = double(end - start) / double(CLOCKS_PER_SEC);
+      // double time_taken = double(end - start) / double(CLOCKS_PER_SEC);
+      // cout << "; Tempo médio: " << fixed 
+      //     << time_taken/10 << setprecision(5);
+      // cout << " sec " << endl;
+
+  double time_taken = double(end - start) / double(CLOCKS_PER_SEC);
       cout << "; Tempo médio: " << fixed 
-          << time_taken/10 << setprecision(5);
+          << time_taken << setprecision(5);
       cout << " sec " << endl;
+
+  showResult(&s);
 
   return 0;
 }

@@ -1,6 +1,6 @@
 *.pdf
 sm
-tests.cpp
+tests/
 generator.cpp
 ig
 obj
