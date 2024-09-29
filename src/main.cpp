@@ -10,11 +10,11 @@
 using namespace std;
 
 
-int swapImprove = 0;
-int rotateImprove = 0;
-int Re1 = 0;
-int Re2 = 0;
-int Re3 = 0;
+// int swapImprove = 0;
+// int rotateImprove = 0;
+// int Re1 = 0;
+// int Re2 = 0;
+// int Re3 = 0;
 
 struct Solution {
   vector<int> sequence;
@@ -129,6 +129,51 @@ void attSolution(Data *data, Solution *s, int start) {
   }
 }
 
+//retorna true se a solução é melhor e false caso contrário
+bool attSolutionWithStop(Data *data, Solution *s, int start, int stop) {
+  int currentTime;
+  int currentPenalty;
+
+  if(!start) {
+    currentTime = data->initialTime(s->sequence[start]) + data->time(s->sequence[start]);
+    currentPenalty = max(0, data->penalty(s->sequence[start]) * (currentTime - data->deadline(s->sequence[start])));
+  } else {
+    currentTime = s->times[start-1] + data->switchTime(s->sequence[start-1], s->sequence[start]) + data->time(s->sequence[start]);
+    currentPenalty = s->penalty[start-1] + max(0, data->penalty(s->sequence[start]) * (currentTime - data->deadline(s->sequence[start])));;
+  }
+
+  if(stop < s->nonZeroProducts-1) stop++;
+  int timeInStop = s->times[stop];
+  int penaltyInStop = s->penalty[stop];
+  
+  for(int i = start; i <= stop; i++) {
+    s->times[i] = currentTime;
+    s->penalty[i] = currentPenalty;
+    currentTime += data->switchTime(s->sequence[i], s->sequence[i+1]) + data->time(s->sequence[i+1]);
+    currentPenalty += max(0, data->penalty(s->sequence[i+1]) * (currentTime - data->deadline(s->sequence[i+1])));
+  }
+
+  if(s->times[stop] > timeInStop && ( (s->penalty[stop] > penaltyInStop) || !s->penalty[stop]) ) {
+    // s->penalty[s->nonZeroProducts-1] = 99999999;
+    return false;
+  } //else if(s->times[stop] < timeInStop && ( (s->penalty[stop] < penaltyInStop) || !s->penalty[stop])) {
+  //   return true;
+  // }
+
+  for(int i = stop+1; i < s->nonZeroProducts; i++) {
+    s->times[i] = currentTime;
+    s->penalty[i] = currentPenalty;
+    currentTime += data->switchTime(s->sequence[i], s->sequence[i+1]) + data->time(s->sequence[i+1]);
+    currentPenalty += max(0, data->penalty(s->sequence[i+1]) * (currentTime - data->deadline(s->sequence[i+1])));
+    if(currentPenalty > s->penalty[i+1]) {
+      // s->penalty[s->nonZeroProducts-1] = 99999999;
+      return false;
+    }
+  }
+
+  return true;
+}
+
 bool check(timeToInsert i, timeToInsert j){
   return i.time < j.time;
 }
@@ -202,23 +247,39 @@ bool Swap(Data*data, Solution *s) {
 
       swap(aux.sequence[i], aux.sequence[j]);
       
-      attSolution(data, &aux, i);
+      // attSolution(data, &aux, i);
+      // int delta = aux.penalty[aux.nonZeroProducts-1] - initialValue;
+      // if(delta < bestDelta) {
+      //   best_i = i;
+      //   best_j = j;
+      //   bestDelta = delta;
+      //   bestPenalties = aux.penalty;
+      //   bestTimes = aux.times;
+      // }
 
-      int delta = aux.penalty[aux.nonZeroProducts-1] - initialValue;
-      if(delta < bestDelta) {
-        best_i = i;
-        best_j = j;
-        bestDelta = delta;
-        bestPenalties = aux.penalty;
-        bestTimes = aux.times;
+      bool improved = attSolutionWithStop(data, &aux, i, j);
+      if(improved) {
+        int delta = aux.penalty[aux.nonZeroProducts-1] - initialValue;
+        if(delta < bestDelta) {
+          best_i = i;
+          best_j = j;
+          bestDelta = delta;
+        }
       }
     }
   }
 
+  // if(bestDelta < 0) {
+  //   swap(s->sequence[best_i], s->sequence[best_j]);
+  //   s->times = bestTimes;
+  //   s->penalty = bestPenalties;
+  //   attSolution(data, s, best_i);
+  //   return true;
+  // }
+
   if(bestDelta < 0) {
     swap(s->sequence[best_i], s->sequence[best_j]);
-    s->times = bestTimes;
-    s->penalty = bestPenalties;
+    attSolution(data, s, best_i);
     return true;
   }
 
@@ -239,23 +300,37 @@ bool Rotate(Data*data, Solution *s) {
 
       reverse(aux.sequence.begin()+i, aux.sequence.begin()+j);
 
-      attSolution(data, &aux, i);
+      // attSolution(data, &aux, i);
+      // int delta = aux.penalty[aux.nonZeroProducts-1] - initialValue;
+      // if(delta < bestDelta) {
+      //   best_i = i;
+      //   best_j = j;
+      //   bestDelta = delta;
+      //   bestPenalties = aux.penalty;
+      //   bestTimes = aux.times;
+      // }
 
-      int delta = aux.penalty[aux.nonZeroProducts-1] - initialValue;
-      if(delta < bestDelta) {
-        best_i = i;
-        best_j = j;
-        bestDelta = delta;
-        bestPenalties = aux.penalty;
-        bestTimes = aux.times;
+      bool improved = attSolutionWithStop(data, &aux, i, j);
+      if(improved) {
+        int delta = aux.penalty[aux.nonZeroProducts-1] - initialValue;
+        if(delta < bestDelta) {
+          best_i = i;
+          best_j = j;
+          bestDelta = delta;
+        }
       }
     }
   }
 
+  // if(bestDelta < 0) {
+  //   reverse(s->sequence.begin()+best_i, s->sequence.begin()+best_j);
+  //   s->times = bestTimes;
+  //   s->penalty = bestPenalties;
+  //   return true;
+  // }
   if(bestDelta < 0) {
     reverse(s->sequence.begin()+best_i, s->sequence.begin()+best_j);
-    s->times = bestTimes;
-    s->penalty = bestPenalties;
+    attSolution(data, s, best_i);
     return true;
   }
 
@@ -275,15 +350,23 @@ bool Reinsertion(Data*data, Solution *s, int range) {
       Solution aux = *s;
       rotate(aux.sequence.begin() + i, aux.sequence.begin() + i + range, aux.sequence.begin() + j);
 
-      attSolution(data, &aux, i);
-
-      int delta = aux.penalty[aux.nonZeroProducts-1] - initialValue;
-      if(delta < bestDelta) {
-        best_i = i;
-        best_j = j;
-        bestDelta = delta;
-        bestPenalties = aux.penalty;
-        bestTimes = aux.times;
+      // attSolution(data, &aux, i);
+      // int delta = aux.penalty[aux.nonZeroProducts-1] - initialValue;
+      // if(delta < bestDelta) {
+      //   best_i = i;
+      //   best_j = j;
+      //   bestDelta = delta;
+      //   bestPenalties = aux.penalty;
+      //   bestTimes = aux.times;
+      // }
+      bool improved = attSolutionWithStop(data, &aux, i, j);
+      if(improved) {
+        int delta = aux.penalty[aux.nonZeroProducts-1] - initialValue;
+        if(delta < bestDelta) {
+          best_i = i;
+          best_j = j;
+          bestDelta = delta;
+        }
       }
     }
 
@@ -291,15 +374,23 @@ bool Reinsertion(Data*data, Solution *s, int range) {
       Solution aux = *s;
       rotate(aux.sequence.begin()+j, aux.sequence.begin()+i, aux.sequence.begin()+i+range);
 
-      attSolution(data, &aux, j);
-
-      int delta = aux.penalty[aux.nonZeroProducts-1] - initialValue;
-      if(delta < bestDelta) {
-        best_i = i;
-        best_j = j;
-        bestDelta = delta;
-        bestPenalties = aux.penalty;
-        bestTimes = aux.times;
+      // attSolution(data, &aux, j);
+      // int delta = aux.penalty[aux.nonZeroProducts-1] - initialValue;
+      // if(delta < bestDelta) {
+      //   best_i = i;
+      //   best_j = j;
+      //   bestDelta = delta;
+      //   bestPenalties = aux.penalty;
+      //   bestTimes = aux.times;
+      // }
+      bool improved = attSolutionWithStop(data, &aux, j, i+range);
+      if(improved) {
+        int delta = aux.penalty[aux.nonZeroProducts-1] - initialValue;
+        if(delta < bestDelta) {
+          best_i = i;
+          best_j = j;
+          bestDelta = delta;
+        }
       }
     }
   }
@@ -307,12 +398,15 @@ bool Reinsertion(Data*data, Solution *s, int range) {
   if(bestDelta < 0) {
     if(best_i > best_j) {
       rotate(s->sequence.begin()+best_j, s->sequence.begin()+best_i, s->sequence.begin()+best_i+range);
+      best_i = best_j;
     } else {
       rotate(s->sequence.begin() + best_i, s->sequence.begin() + best_i + range, s->sequence.begin() + best_j);
     }
 
-    s->times = bestTimes;
-    s->penalty = bestPenalties;
+    attSolution(data, s, best_i);
+    // s->times = bestTimes;
+    // s->penalty = bestPenalties;
+
     return true;
   }
 
@@ -322,6 +416,7 @@ bool Reinsertion(Data*data, Solution *s, int range) {
 
 void LocalSearch(Data *data, Solution *s) {
   vector<int> n = {1, 2, 3, 4, 5};
+  // vector<int> n = {1, 3, 4, 5};
   bool improved = false;
   while(!n.empty()) {
     int x = rand() % n.size();
@@ -343,23 +438,24 @@ void LocalSearch(Data *data, Solution *s) {
         break; 
     }
     if(improved) {
-      if(n[x] == 1) {
-        swapImprove++;
-      }
-      if(n[x] == 2) {
-        rotateImprove++;
-      }
-      if(n[x] == 3) {
-        Re1++;
-      }
-      if(n[x] == 4) {
-        Re2++;
-      }
-      if(n[x] == 5) {
-        Re3++;
-      }
+      // if(n[x] == 1) {
+      //   swapImprove++;
+      // }
+      // else if(n[x] == 2) {
+      //   rotateImprove++;
+      // }
+      // else if(n[x] == 3) {
+      //   Re1++;
+      // }
+      // else if(n[x] == 4) {
+      //   Re2++;
+      // }
+      // else if(n[x] == 5) {
+      //   Re3++;
+      // }
       if(!s->penalty[s->nonZeroProducts-1]) return;
       n = {1, 2, 3, 4, 5};
+      // n = {1, 3, 4, 5};
     } else {
       n.erase(n.begin()+x);
     }
@@ -396,16 +492,17 @@ void Perturbacao(Data *data, Solution *s) {
   attSolution(data, s, inicioDoBloco1-1);
 }
 
+  
 
 Result ILS(Data *data, int max_iter) {
   Result bestSolution;
   bestSolution.penalty = numeric_limits<int>::max();
   
-  int maxIterIls = 60;
+  int maxIterIls = 150;
 
   for(int i = 0; i < max_iter; i++) {
     Solution s = Guloso(data);
-    cout << "custo do guloso: " << s.penalty[s.nonZeroProducts-1] << "\n";
+    // cout << "custo do guloso: " << s.penalty[s.nonZeroProducts-1] << "\n";
     Solution best = s;
     int iterILS = 0;
     while(iterILS <= maxIterIls) {
@@ -438,7 +535,7 @@ int main(int argc, char* argv[]) {
   Data data;
   time_t start, end;
   double media = 0;
-  int n = 1;
+  int n = 10;
   start = clock();
   srand(time(NULL)+23879);
   ios_base::sync_with_stdio(false);
@@ -448,7 +545,7 @@ int main(int argc, char* argv[]) {
   for(int cont = 0; cont < n; cont++) {
     data.readFromFile(argv[1]);
 
-    r = ILS(&data, 25);
+    r = ILS(&data, 50);
     media += r.penalty;
   }
 
@@ -459,7 +556,7 @@ int main(int argc, char* argv[]) {
   calculateTimes(&data, &s);
   calculatePenalties(&data, &s);
 
-  cout << "improves:\nSwap: " << swapImprove << "\nRotate: " << rotateImprove << "\nre1: " << Re1 << "\nr2: " << Re2 << "\nr3: " << Re3 << endl;  
+  // cout << "improves:\nSwap: " << swapImprove << "\nRotate: " << rotateImprove << "\nre1: " << Re1 << "\nr2: " << Re2 << "\nr3: " << Re3 << endl;  
   cout << "cost médio: " << media/n;
   end = clock();
   double time_taken = double(end - start) / double(CLOCKS_PER_SEC);
