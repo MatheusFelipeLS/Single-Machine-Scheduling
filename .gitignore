@@ -1,5 +1,5 @@
 *.pdf
-sm
+apa
 tests/
 generator.cpp
 ig

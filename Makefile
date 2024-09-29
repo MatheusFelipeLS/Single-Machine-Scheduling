@@ -14,7 +14,7 @@ SOURCES = $(wildcard $(SRC_DIR)/*.cpp)
 OBJECTS = $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(SOURCES))
 
 # Nome do executável
-TARGET = sm
+TARGET = apa
 
 # Regra padrão para compilar o programa
 all: $(TARGET)
