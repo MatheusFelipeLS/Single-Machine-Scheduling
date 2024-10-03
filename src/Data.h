@@ -9,9 +9,9 @@ private:
     int qtOrders;
     std::vector<int> times;
     std::vector<int> deadlines;
-    std::vector<int> penalties;
+    std::vector<int> fines;
     std::vector<int> initialPreparationTime;
-    std::vector<std::vector<int>> switchingTimeMatrix;
+    std::vector<std::vector<int>> timeToExchangeMatrix;
 
 public:
     // Função para ler os dados de um arquivo
@@ -19,18 +19,12 @@ public:
 
     // Funções para retornar os valores
     int getQtOrders() const;
-    const std::vector<int>& getTimes() const;
-    const std::vector<int>& getDeadlines() const;
-    const std::vector<int>& getPenalties() const;
-    const std::vector<int>& getInitialPreparationTime() const;
-    const std::vector<std::vector<int>>& getSwitchingTimeMatrix() const;
 
-    const std::vector<int>& getSwitchingTimeVector(int pos) const;
     const int initialTime(int pos) const;
     const int time(int pos) const;
     const int deadline(int pos) const;
-    const int penalty(int pos) const;
-    const int switchTime(int x, int y) const;
+    const int fine(int pos) const;
+    const int timeToExchange(int x, int y) const;
 };
 
 #endif // DATA_H

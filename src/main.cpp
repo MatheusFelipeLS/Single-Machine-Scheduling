@@ -10,12 +10,6 @@
 using namespace std;
 
 
-int swapImprove = 0;
-int rotateImprove = 0;
-int Re1 = 0;
-int Re2 = 0;
-int Re3 = 0;
-
 struct ProductionInfo {
   vector<int> sequence;
   vector<int> accumulatedTime;
@@ -46,7 +40,7 @@ void calculateTimes(const Data *data, ProductionInfo *s) {
 
   for(i = 0; i < (int) data->getQtOrders()-1; i++) {
     s->accumulatedTime[i] = currentTime; 
-    currentTime += data->time(s->sequence[i+1]) + data->switchTime(s->sequence[i], s->sequence[i+1]);
+    currentTime += data->time(s->sequence[i+1]) + data->timeToExchange(s->sequence[i], s->sequence[i+1]);
   }
 
   s->accumulatedTime[i] = currentTime; 
@@ -54,10 +48,10 @@ void calculateTimes(const Data *data, ProductionInfo *s) {
 
 
 void calculatePenalties(const Data *data, ProductionInfo *s) {
-  s->accumulatedFine[0] = max(0, data->penalty(s->sequence[0]) * (data->time(s->sequence[0]) - data->deadline(s->sequence[0])));
+  s->accumulatedFine[0] = max(0, data->fine(s->sequence[0]) * (data->time(s->sequence[0]) - data->deadline(s->sequence[0])));
 
   for(int i = 1; i < (int) s->sequence.size(); i++) {
-    s->accumulatedFine[i] = s->accumulatedFine[i-1] + max(0, data->penalty(s->sequence[i]) * (s->accumulatedTime[i] - data->deadline(s->sequence[i])));
+    s->accumulatedFine[i] = s->accumulatedFine[i-1] + max(0, data->fine(s->sequence[i]) * (s->accumulatedTime[i] - data->deadline(s->sequence[i])));
   }
 }
 
@@ -66,13 +60,13 @@ void attProductionInfo(const Data *data, ProductionInfo *s, int start) {
   int i;
   if(!start) {
     s->accumulatedTime[0] = data->time(s->sequence[0]) + data->initialTime(s->sequence[0]);
-    s->accumulatedFine[0] = max(0, data->penalty(s->sequence[0]) * (s->accumulatedTime[0] - data->deadline(s->sequence[0])));
+    s->accumulatedFine[0] = max(0, data->fine(s->sequence[0]) * (s->accumulatedTime[0] - data->deadline(s->sequence[0])));
     start++;
   }
 
   for(i = start; i < (int) s->qtProductsWithFine; i++) {
-    s->accumulatedTime[i] = s->accumulatedTime[i-1] + data->switchTime(s->sequence[i-1], s->sequence[i]) + data->time(s->sequence[i]);
-    s->accumulatedFine[i] = s->accumulatedFine[i-1] + max(0, data->penalty(s->sequence[i]) * (s->accumulatedTime[i] - data->deadline(s->sequence[i])));
+    s->accumulatedTime[i] = s->accumulatedTime[i-1] + data->timeToExchange(s->sequence[i-1], s->sequence[i]) + data->time(s->sequence[i]);
+    s->accumulatedFine[i] = s->accumulatedFine[i-1] + max(0, data->fine(s->sequence[i]) * (s->accumulatedTime[i] - data->deadline(s->sequence[i])));
   }
 }
 
@@ -83,7 +77,7 @@ bool sequenceIsBetter(const Data *data, ProductionInfo *s, int start, int stop) 
 
   if(!start) {
     currentTime = data->initialTime(s->sequence[start]) + data->time(s->sequence[start]);
-    currentPenalty = max(0, data->penalty(s->sequence[start]) * (currentTime - data->deadline(s->sequence[start])));
+    currentPenalty = max(0, data->fine(s->sequence[start]) * (currentTime - data->deadline(s->sequence[start])));
     s->accumulatedTime[0] = currentTime;
     s->accumulatedFine[0] = currentPenalty;
     start++;
@@ -98,19 +92,23 @@ bool sequenceIsBetter(const Data *data, ProductionInfo *s, int start, int stop) 
   int penaltyInStop = s->accumulatedFine[stop];
   
   for(int i = start; i <= stop; i++) {
-    currentTime += data->switchTime(s->sequence[i-1], s->sequence[i]) + data->time(s->sequence[i]);
-    currentPenalty += max(0, data->penalty(s->sequence[i]) * (currentTime - data->deadline(s->sequence[i])));
+    currentTime += data->timeToExchange(s->sequence[i-1], s->sequence[i]) + data->time(s->sequence[i]);
+    currentPenalty += max(0, data->fine(s->sequence[i]) * (currentTime - data->deadline(s->sequence[i])));
     s->accumulatedTime[i] = currentTime;
     s->accumulatedFine[i] = currentPenalty;
   }
 
   if(s->accumulatedTime[stop] > timeInStop && ( (s->accumulatedFine[stop] > penaltyInStop) || !s->accumulatedFine[stop]) ) {
     return false;
+  } else if(s->accumulatedTime[stop] < timeInStop && ( (s->accumulatedFine[stop] < penaltyInStop) || !s->accumulatedFine[stop]) ) {
+    attProductionInfo(data, s, stop+1);
+    return true;
   }
 
+
   for(int i = stop+1; i < s->qtProductsWithFine; i++) {
-    currentTime += data->switchTime(s->sequence[i-1], s->sequence[i]) + data->time(s->sequence[i]);
-    currentPenalty += max(0, data->penalty(s->sequence[i]) * (currentTime - data->deadline(s->sequence[i])));
+    currentTime += data->timeToExchange(s->sequence[i-1], s->sequence[i]) + data->time(s->sequence[i]);
+    currentPenalty += max(0, data->fine(s->sequence[i]) * (currentTime - data->deadline(s->sequence[i])));
 
     if(currentPenalty > s->accumulatedFine[i]) {
       return false;
@@ -125,7 +123,7 @@ bool sequenceIsBetter(const Data *data, ProductionInfo *s, int start, int stop) 
 }
 
 bool check(timeToInsert i, timeToInsert j){
-  return i.time < j.time;
+  return i.time > j.time;
 }
 
 ProductionInfo Guloso(const Data *data) {
@@ -138,7 +136,7 @@ ProductionInfo Guloso(const Data *data) {
   vector<int> switchTime(data->getQtOrders());
 
   for(int i = 0; i < (int) data->getQtOrders(); i++) { 
-    if(!data->penalty(i)) {
+    if(!data->fine(i)) {
       s.qtProductsWithFine--;
       s.sequence[s.qtProductsWithFine] = i;
     } else {
@@ -165,11 +163,11 @@ ProductionInfo Guloso(const Data *data) {
   int k = 1;
   while(!CL.empty()) {
     for(int i = 0; i < (int) CL.size(); i++) {
-      CL[i].time = data->deadline(CL[i].node) - data->switchTime(s.sequence[s.sequence.size()-1], CL[i].node) + data->time(CL[i].node);
+      CL[i].time = data->deadline(CL[i].node) - data->timeToExchange(s.sequence[s.sequence.size()-1], CL[i].node) + data->time(CL[i].node);
     } 
 
     sort(CL.begin(), CL.end(), check);
-    int idx = rand() % (((int) (CL.size() - 1) / 4) + 1);
+    int idx = rand() % (((int) (CL.size() - 1) / 2) + 1);
     s.sequence[k] = CL[idx].node;
     k++;
     swap(CL[idx], CL[CL.size()-1]);
@@ -185,8 +183,7 @@ ProductionInfo Guloso(const Data *data) {
 bool Swap(const Data*data, ProductionInfo *s) {
   int best_i = 0;
   int best_j = 0;
-  int bestDelta = 1;
-  vector<int> bestTimes, bestPenalties;
+  int bestDelta = 0;
   int initialValue = s->accumulatedFine[s->qtProductsWithFine-1];
 
   for(int i = 0; i < s->qtProductsWithFine-1; i++) {
@@ -220,8 +217,7 @@ bool Swap(const Data*data, ProductionInfo *s) {
 bool Rotate(const Data*data, ProductionInfo *s) {
   int best_i = 0;
   int best_j = 0;
-  int bestDelta = 1;
-  vector<int> bestTimes, bestPenalties;
+  int bestDelta = 0;
   int initialValue = s->accumulatedFine[s->qtProductsWithFine-1];
 
   for(int i = 0; i < (int) s->qtProductsWithFine-1; i++) {
@@ -255,11 +251,10 @@ bool Rotate(const Data*data, ProductionInfo *s) {
 bool Reinsertion(const Data*data, ProductionInfo *s, int range) {
   int best_i = 0;
   int best_j = 0;
-  int bestDelta = 1;
-  vector<int> bestTimes, bestPenalties;
+  int bestDelta = 0;
   int initialValue = s->accumulatedFine[s->qtProductsWithFine-1];
 
-  for(int i = 0; i < s->qtProductsWithFine-range+1; i++) {
+  for(int i = 0; i < s->qtProductsWithFine-range; i++) {
     for(int j = i+range; j < s->qtProductsWithFine; j++) {
       ProductionInfo aux = *s;
       rotate(aux.sequence.begin() + i, aux.sequence.begin() + i + range, aux.sequence.begin() + j);
@@ -274,7 +269,9 @@ bool Reinsertion(const Data*data, ProductionInfo *s, int range) {
         }
       }
     }
+  }
 
+  for(int i = 1; i < s->qtProductsWithFine-range+1; i++) {
     for(int j = i-1; j >= 0; j--) {
       ProductionInfo aux = *s;
       rotate(aux.sequence.begin()+j, aux.sequence.begin()+i, aux.sequence.begin()+i+range);
@@ -309,8 +306,7 @@ bool Reinsertion(const Data*data, ProductionInfo *s, int range) {
 
 
 void LocalSearch(const Data *data, ProductionInfo *s) {
-  // vector<int> n = {1, 2, 3, 4, 5};
-  vector<int> n = {1, 3, 4, 5};
+  vector<int> n = {1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
   bool improved = false;
   while(!n.empty()) {
     int x = rand() % n.size();
@@ -330,26 +326,40 @@ void LocalSearch(const Data *data, ProductionInfo *s) {
       case 5:
         improved = Reinsertion(data, s, 3);
         break; 
+      case 6:
+        improved = Reinsertion(data, s, 4);
+        break; 
+      case 7:
+        improved = Reinsertion(data, s, 5);
+        break; 
+      case 8:
+        improved = Reinsertion(data, s, 6);
+        break; 
+      case 9:
+        improved = Reinsertion(data, s, 7);
+        break;
+      case 10:
+        improved = Reinsertion(data, s, 8);
+        break;  
+      case 11:
+        improved = Reinsertion(data, s, 9);
+        break;
+      case 12:
+        improved = Reinsertion(data, s, 10);
+        break;  
+      case 13:
+        improved = Reinsertion(data, s, 11);
+        break;  
+      case 14:
+        improved = Reinsertion(data, s, 12);
+        break;
+      case 15:
+        improved = Reinsertion(data, s, 13);
+        break;  
     }
     if(improved) {
-      if(n[x] == 1) {
-        swapImprove++;
-      }
-      else if(n[x] == 2) {
-        rotateImprove++;
-      }
-      else if(n[x] == 3) {
-        Re1++;
-      }
-      else if(n[x] == 4) {
-        Re2++;
-      }
-      else if(n[x] == 5) {
-        Re3++;
-      }
       if(!s->accumulatedFine[s->qtProductsWithFine-1]) return;
-      // n = {1, 2, 3, 4, 5};
-      n = {1, 3, 4, 5};
+      n = {1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
     } else {
       n.erase(n.begin()+x);
     }
@@ -366,7 +376,7 @@ void swap_ranges(IT start_a, IT end_a, IT start_b, IT end_b) {
 
 
 void Perturbacao(const Data *data, ProductionInfo *s) {
-  int tamMax = (int) s->qtProductsWithFine / 10;
+  int tamMax = (int) data->getQtOrders() / 10;
 
   int bloco1 = rand() % (tamMax -1) + 2;
   int bloco2 = rand() % (tamMax -1) + 2;
@@ -384,30 +394,26 @@ void Perturbacao(const Data *data, ProductionInfo *s) {
 
   attProductionInfo(data, s, inicioDoBloco1-1);
 }
-
-  
+ 
 
 Solution ILS(const Data *data, int max_iter) {
   Solution bestSolution;
   bestSolution.fine = numeric_limits<int>::max();
   
-  int maxIterIls = 50;
+  int maxIterIls = 60;
 
   for(int i = 0; i < max_iter; i++) {
     ProductionInfo s = Guloso(data);
     ProductionInfo best = s;
-    // cout << "custo após guloso: " << best.accumulatedFine[best.qtProductsWithFine-1] << endl;
     int iterILS = 0;
     while(iterILS <= maxIterIls) {
       LocalSearch(data, &s);
-      // cout << "custo após busca local: " << s.accumulatedFine[s.qtProductsWithFine-1] << endl;
       if(s.accumulatedFine[s.qtProductsWithFine-1] < best.accumulatedFine[best.qtProductsWithFine-1]) {
         best = s;
         if(!s.accumulatedFine[s.qtProductsWithFine-1]) break;
         iterILS = 0;
       }
       Perturbacao(data, &s);
-      // cout << "custo após perturbação: " << s.accumulatedFine[s.qtProductsWithFine-1] << endl;
       iterILS++;
     }
 
@@ -420,6 +426,7 @@ Solution ILS(const Data *data, int max_iter) {
 	return bestSolution;
 }
 
+
 int main(int argc, char* argv[]) {
   if (argc < 2) {
     std::cerr << "Uso: " << argv[0] << "<caminho_do_arquivo>\n";
@@ -429,7 +436,7 @@ int main(int argc, char* argv[]) {
   Data data;
   time_t start, end;
   double media = 0;
-  int n = 1;
+  int n = 5;
   start = clock();
   srand(time(NULL)+23879);
   ios_base::sync_with_stdio(false);
@@ -450,7 +457,6 @@ int main(int argc, char* argv[]) {
   calculateTimes(&data, &s);
   calculatePenalties(&data, &s);
 
-  cout << "improves:\nSwap: " << swapImprove << "\nRotate: " << rotateImprove << "\nre1: " << Re1 << "\nr2: " << Re2 << "\nr3: " << Re3 << endl;  
   cout << "cost médio: " << media/n;
   end = clock();
   double time_taken = double(end - start) / double(CLOCKS_PER_SEC);
@@ -467,7 +473,7 @@ int main(int argc, char* argv[]) {
 
 
 // AUXILIAR FUNCTIONS
-void showSolution(ProductionInfo *s) {
+void showProductionInfo(ProductionInfo *s) {
   for(int i = 0; i < (int) s->sequence.size(); i++) cout << s->sequence[i] << " ";
   cout << endl << endl;
 

@@ -16,9 +16,9 @@ void Data::readFromFile(const std::string& filename) {
     // Redimensionando os vetores com base no número de pedidos
     times.resize(qtOrders);
     deadlines.resize(qtOrders);
-    penalties.resize(qtOrders);
+    fines.resize(qtOrders);
     initialPreparationTime.resize(qtOrders);
-    switchingTimeMatrix.resize(qtOrders, std::vector<int>(qtOrders));
+    timeToExchangeMatrix.resize(qtOrders, std::vector<int>(qtOrders));
 
     // Lendo os times
     for (int i = 0; i < qtOrders; i++) {
@@ -32,7 +32,7 @@ void Data::readFromFile(const std::string& filename) {
 
     // Lendo os custos
     for (int i = 0; i < qtOrders; i++) {
-        file >> penalties[i];
+        file >> fines[i];
     }
 
     for (int i = 0; i < qtOrders; i++) {
@@ -42,7 +42,7 @@ void Data::readFromFile(const std::string& filename) {
     // Lendo a matriz de times de troca
     for (int i = 0; i < qtOrders; i++) {
         for (int j = 0; j < qtOrders; j++) {
-            file >> switchingTimeMatrix[i][j];
+            file >> timeToExchangeMatrix[i][j];
         }
     }
 
@@ -53,32 +53,8 @@ int Data::getQtOrders() const {
     return this->qtOrders;
 }
 
-const std::vector<int>& Data::getTimes() const {
-    return this->times;
-}
-
-const std::vector<int>& Data::getDeadlines() const {
-    return this->deadlines;
-}
-
-const std::vector<int>& Data::getInitialPreparationTime() const {
-    return this->initialPreparationTime;
-}
-
-const std::vector<int>& Data::getPenalties() const {
-    return this->penalties;
-}
-
 const int Data::initialTime(int pos) const {
     return initialPreparationTime[pos];
-}
-
-const std::vector<std::vector<int>>& Data::getSwitchingTimeMatrix() const {
-    return switchingTimeMatrix;
-}
-
-const std::vector<int>& Data::getSwitchingTimeVector(int pos) const {
-    return this->switchingTimeMatrix[pos];
 }
 
 const int Data::time(int pos) const {
@@ -89,11 +65,11 @@ const int Data::deadline(int pos) const {
     return this->deadlines[pos];
 }
 
-const int Data::penalty(int pos) const {
-    return this->penalties[pos];
+const int Data::fine(int pos) const {
+    return this->fines[pos];
 }
 
-const int Data::switchTime(int x, int y) const {
-    return this->switchingTimeMatrix[x][y];
+const int Data::timeToExchange(int x, int y) const {
+    return this->timeToExchangeMatrix[x][y];
 }
 
