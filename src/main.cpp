@@ -29,7 +29,7 @@ int main(int argc, char* argv[]) {
 
   start = clock();
   for(int cont = 0; cont < n; cont++) {
-    r = ILS(&data, 25);
+    r = ILS(&data, 10);
     media += r.fine;
   }
   end = clock();
@@ -41,7 +41,8 @@ int main(int argc, char* argv[]) {
   calculateTimes(&data, &s);
   calculatePenalties(&data, &s);
 
-  cout << "cost médio: " << media/n;
+
+  cout << "Número de iterações: " << n << "\nMulta médio: " << media/n;
   double time_taken = double(end - start) / double(CLOCKS_PER_SEC);
   cout << "; Tempo médio: " << fixed 
       << time_taken/n << setprecision(5);

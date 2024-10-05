@@ -1,0 +1,15 @@
+maxIter 10, maxIterILS 150 -> tempo 150 a 180 s, mais ou menos
+
+///////////////////////
+maxIter 10, maxIterILS 300
+instances/n60A.txt 
+Número de iterações: 5
+Multa médio: 528.6; Tempo médio: 324.888727 sec 
+
+instances/n60F.txt
+Número de iterações: 5
+Multa médio: 97191.2; Tempo médio: 371.927383 sec 
+
+instances/n60L.txt 
+Número de iterações: 5
+Multa médio: 334272; Tempo médio: 251.382881 sec 

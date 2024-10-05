@@ -15,6 +15,7 @@ struct ProductionInfo {
   vector<int> accumulatedTime;
   vector<int> accumulatedFine;
   int qtProductsWithFine;
+  int lastProductWith0Fine;
 };
 
 
