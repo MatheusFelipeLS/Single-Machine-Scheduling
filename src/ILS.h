@@ -4,6 +4,8 @@
 #include <limits>
 #include <cmath>
 #include <bits/stdc++.h>
+#include <time.h>
+
 
 #include "Data.h"
 
@@ -38,7 +40,7 @@ void swap_ranges(IT start_a, IT end_a, IT start_b, IT end_b) {
     std::rotate(it, new_start_a, end_b);
 }
 
-
+void showSolution(Solution *s);
 void showProductionInfo(ProductionInfo *s);
 void showResult(ProductionInfo *s);
 void calculateTimes(const Data *data, ProductionInfo *s);

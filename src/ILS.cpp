@@ -13,6 +13,7 @@ void calculateTimes(const Data *data, ProductionInfo *s) {
 }
 
 
+
 void calculatePenalties(const Data *data, ProductionInfo *s) {
   s->accumulatedFine[0] = max(0, data->fine(s->sequence[0]) * (data->time(s->sequence[0]) - data->deadline(s->sequence[0])));
 
@@ -38,54 +39,54 @@ void attProductionInfo(const Data *data, ProductionInfo *s, int start) {
 
 
 //retorna true se a solução é melhor e false caso contrário
-bool sequenceIsBetter(const Data *data, ProductionInfo *s, int start, int stop) {
-  int currentTime;
-  int currentPenalty;
+// bool sequenceIsBetter(const Data *data, ProductionInfo *s, int start, int stop) {
+//   int currentTime;
+//   int currentPenalty;
 
-  if(!start) {
-    currentTime = data->initialTime(s->sequence[start]) + data->time(s->sequence[start]);
-    currentPenalty = max(0, data->fine(s->sequence[start]) * (currentTime - data->deadline(s->sequence[start])));
-    s->accumulatedTime[0] = currentTime;
-    s->accumulatedFine[0] = currentPenalty;
-    start++;
-  } else {
-    currentTime = s->accumulatedTime[start-1];
-    currentPenalty = s->accumulatedFine[start-1];
-  }
+//   if(!start) {
+//     currentTime = data->initialTime(s->sequence[start]) + data->time(s->sequence[start]);
+//     currentPenalty = max(0, data->fine(s->sequence[start]) * (currentTime - data->deadline(s->sequence[start])));
+//     s->accumulatedTime[0] = currentTime;
+//     s->accumulatedFine[0] = currentPenalty;
+//     start++;
+//   } else {
+//     currentTime = s->accumulatedTime[start-1];
+//     currentPenalty = s->accumulatedFine[start-1];
+//   }
 
-  if(stop < s->qtProductsWithFine-1) stop++;
+//   if(stop < s->qtProductsWithFine-1) stop++;
 
-  int timeInStop = s->accumulatedTime[stop];
-  int penaltyInStop = s->accumulatedFine[stop];
+//   int timeInStop = s->accumulatedTime[stop];
+//   int penaltyInStop = s->accumulatedFine[stop];
   
-  for(int i = start; i <= stop; i++) {
-    currentTime += data->timeToExchange(s->sequence[i-1], s->sequence[i]) + data->time(s->sequence[i]);
-    currentPenalty += max(0, data->fine(s->sequence[i]) * (currentTime - data->deadline(s->sequence[i])));
-    s->accumulatedTime[i] = currentTime;
-    s->accumulatedFine[i] = currentPenalty;
-  }
+//   for(int i = start; i <= stop; i++) {
+//     currentTime += data->timeToExchange(s->sequence[i-1], s->sequence[i]) + data->time(s->sequence[i]);
+//     currentPenalty += max(0, data->fine(s->sequence[i]) * (currentTime - data->deadline(s->sequence[i])));
+//     s->accumulatedTime[i] = currentTime;
+//     s->accumulatedFine[i] = currentPenalty;
+//   }
 
-  if((s->accumulatedTime[stop] >= timeInStop) && (s->accumulatedFine[stop] >= penaltyInStop)) {
-    return false;
-  } else if(s->accumulatedTime[stop] <= timeInStop && (s->accumulatedFine[stop] <= penaltyInStop)) {
-    attProductionInfo(data, s, stop+1);
-    return true;
-  }
+//   if((s->accumulatedTime[stop] >= timeInStop) && (s->accumulatedFine[stop] >= penaltyInStop)) {
+//     return false;
+//   } else if(s->accumulatedTime[stop] <= timeInStop && (s->accumulatedFine[stop] <= penaltyInStop)) {
+//     attProductionInfo(data, s, stop+1);
+//     return true;
+//   }
 
-  for(int i = stop+1; i < s->qtProductsWithFine; i++) {
-    currentTime += data->timeToExchange(s->sequence[i-1], s->sequence[i]) + data->time(s->sequence[i]);
-    currentPenalty += max(0, data->fine(s->sequence[i]) * (currentTime - data->deadline(s->sequence[i])));
+//   for(int i = stop+1; i < s->qtProductsWithFine; i++) {
+//     currentTime += data->timeToExchange(s->sequence[i-1], s->sequence[i]) + data->time(s->sequence[i]);
+//     currentPenalty += max(0, data->fine(s->sequence[i]) * (currentTime - data->deadline(s->sequence[i])));
 
-    if(currentPenalty > s->accumulatedFine[i]) {
-      return false;
-    }
+//     if(currentPenalty >= s->accumulatedFine[i] && currentTime >= s->accumulatedTime[i]) {
+//       return false;
+//     }
 
-    s->accumulatedTime[i] = currentTime;
-    s->accumulatedFine[i] = currentPenalty;
-  }
+//     s->accumulatedTime[i] = currentTime;
+//     s->accumulatedFine[i] = currentPenalty;
+//   }
 
-  return true;
-}
+//   return true;
+// }
 
 
 bool check(timeToInsert i, timeToInsert j){
@@ -133,6 +134,41 @@ ProductionInfo Guloso(const Data *data) {
 }
 
 
+//compara ProductionInfo em um determinado trecho e retorna true se a segunda for melhor, e false caso contrário
+bool sequenceIsBetter(const Data* data, const ProductionInfo *s1, ProductionInfo *s2, int start, int stop) {
+  if(!start) {
+    s2->accumulatedTime[0] = data->initialTime(s2->sequence[0]) + data->time(s2->sequence[0]);
+    s2->accumulatedFine[0] = max(0, data->fine(s2->sequence[0]) * (s2->accumulatedTime[0] - data->deadline(s2->sequence[0])));
+    start++;
+  } 
+
+  if(stop < s2->qtProductsWithFine-1) stop++;
+  
+  for(int i = start; i <= stop; i++) {
+    s2->accumulatedTime[i] = s2->accumulatedTime[i-1] + data->timeToExchange(s2->sequence[i-1], s2->sequence[i]) + data->time(s2->sequence[i]);
+    s2->accumulatedFine[i] = s2->accumulatedFine[i-1] + max(0, data->fine(s2->sequence[i]) * (s2->accumulatedTime[i] - data->deadline(s2->sequence[i])));
+  }
+
+  if((s2->accumulatedTime[stop] >= s1->accumulatedTime[stop]) && (s2->accumulatedFine[stop] >= s1->accumulatedFine[stop])) {
+    return false;
+  } else if(s2->accumulatedTime[stop] <= s1->accumulatedTime[stop] && s2->accumulatedFine[stop] <= s1->accumulatedFine[stop]) {
+    attProductionInfo(data, s2, stop+1);
+    return true;
+  }
+
+  for(int i = stop+1; i < s2->qtProductsWithFine; i++) {
+    s2->accumulatedTime[i] = s2->accumulatedTime[i-1] + data->timeToExchange(s2->sequence[i-1], s2->sequence[i]) + data->time(s2->sequence[i]);
+    s2->accumulatedFine[i] = s2->accumulatedFine[i-1] + max(0, data->fine(s2->sequence[i]) * (s2->accumulatedTime[i] - data->deadline(s2->sequence[i])));
+    
+    if(s2->accumulatedFine[i] >= s1->accumulatedFine[i] && s2->accumulatedTime[i] >= s1->accumulatedTime[i]) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+
 bool Swap(const Data*data, ProductionInfo *s) {
   int best_i = 0;
   int best_j = 0;
@@ -142,10 +178,9 @@ bool Swap(const Data*data, ProductionInfo *s) {
   for(int i = 0; i < s->qtProductsWithFine-1; i++) {
     for(int j = i+1; j < s->qtProductsWithFine; j++) {
       ProductionInfo aux = *s;
-
       swap(aux.sequence[i], aux.sequence[j]);
 
-      bool improved = sequenceIsBetter(data, &aux, i, j);
+      bool improved = sequenceIsBetter(data, s, &aux, i, j);
       if(improved) {
         int delta = aux.accumulatedFine[aux.qtProductsWithFine-1] - initialValue;
         if(delta < bestDelta) {
@@ -179,7 +214,7 @@ bool Rotate(const Data*data, ProductionInfo *s) {
 
       reverse(aux.sequence.begin()+i, aux.sequence.begin()+j);
 
-      bool improved = sequenceIsBetter(data, &aux, i, j);
+      bool improved = sequenceIsBetter(data, s, &aux, i, j);
       if(improved) {
         int delta = aux.accumulatedFine[aux.qtProductsWithFine-1] - initialValue;
         if(delta < bestDelta) {
@@ -201,57 +236,6 @@ bool Rotate(const Data*data, ProductionInfo *s) {
 }
 
 
-//compara ProductionInfo em um determinado trecho e retorna true se a segunda for melhor, e false caso contrário
-bool reinsertionFoiBom(const Data* data, ProductionInfo *s1, ProductionInfo *s2, int start, int stop) {
-  int currentTime;
-  int currentPenalty;
-
-  if(!start) {
-    currentTime = data->initialTime(s2->sequence[start]) + data->time(s2->sequence[start]);
-    currentPenalty = max(0, data->fine(s2->sequence[start]) * (currentTime - data->deadline(s2->sequence[start])));
-    s2->accumulatedTime[0] = currentTime;
-    s2->accumulatedFine[0] = currentPenalty;
-    start++;
-  } else {
-    currentTime = s2->accumulatedTime[start-1];
-    currentPenalty = s2->accumulatedFine[start-1];
-  }
-
-  if(stop < s2->qtProductsWithFine-1) 
-  stop++;
-
-  int timeInStop = s1->accumulatedTime[stop];
-  int penaltyInStop = s1->accumulatedFine[stop];
-  
-  for(int i = start; i <= stop; i++) {
-    currentTime += data->timeToExchange(s2->sequence[i-1], s2->sequence[i]) + data->time(s2->sequence[i]);
-    currentPenalty += max(0, data->fine(s2->sequence[i]) * (currentTime - data->deadline(s2->sequence[i])));
-    s2->accumulatedTime[i] = currentTime;
-    s2->accumulatedFine[i] = currentPenalty;
-  }
-
-  if((s2->accumulatedTime[stop] >= timeInStop) && (s2->accumulatedFine[stop] >= penaltyInStop)) {
-    return false;
-  } else if(s2->accumulatedTime[stop] < timeInStop && (s2->accumulatedFine[stop] < penaltyInStop || !penaltyInStop)) {
-    attProductionInfo(data, s2, stop);
-    return true;
-  }
-
-  for(int i = stop+1; i < s2->qtProductsWithFine; i++) {
-    currentTime += data->timeToExchange(s2->sequence[i-1], s2->sequence[i]) + data->time(s2->sequence[i]);
-    currentPenalty += max(0, data->fine(s2->sequence[i]) * (currentTime - data->deadline(s2->sequence[i])));
-
-    if(currentPenalty >= s1->accumulatedFine[i]) {
-      return false;
-    }
-
-    s2->accumulatedTime[i] = currentTime;
-    s2->accumulatedFine[i] = currentPenalty;
-  }
-
-  return true;
-}
-
 bool Reinsertion(const Data* data, ProductionInfo *s, int range) {
   int best_i = 0;
   int best_j = 0;
@@ -259,15 +243,15 @@ bool Reinsertion(const Data* data, ProductionInfo *s, int range) {
   int initialValue = s->accumulatedFine[s->qtProductsWithFine-1];
 
   for(int i = 0; i < s->qtProductsWithFine-range; i++) {
-    ProductionInfo aux2 = *s;
+    ProductionInfo aux = *s;
 
     for(int j = i+range; j < s->qtProductsWithFine; j++) {
-      rotate(aux2.sequence.begin() + (j-range), aux2.sequence.begin() + j, aux2.sequence.begin() + j + 1);
+      rotate(aux.sequence.begin() + (j-range), aux.sequence.begin() + j, aux.sequence.begin() + j + 1);
 
-      bool improved = reinsertionFoiBom(data, s, &aux2, j-range, j);
+      bool improved = sequenceIsBetter(data, s, &aux, j-range, j);
 
       if(improved) {
-        int delta = aux2.accumulatedFine[aux2.qtProductsWithFine-1] - initialValue;
+        int delta = aux.accumulatedFine[aux.qtProductsWithFine-1] - initialValue;
         if(delta < bestDelta) {
           best_i = i;
           best_j = j;
@@ -277,12 +261,13 @@ bool Reinsertion(const Data* data, ProductionInfo *s, int range) {
     }
   }
 
-  for(int i = 1; i < s->qtProductsWithFine-range+1; i++) {
+  for(int i = s->qtProductsWithFine-range; i > 0; i--) {
+    ProductionInfo aux = *s;
     for(int j = i-1; j >= 0; j--) {
-      ProductionInfo aux = *s;
-      rotate(aux.sequence.begin()+j, aux.sequence.begin()+i, aux.sequence.begin()+i+range);
+      rotate(aux.sequence.begin()+j, aux.sequence.begin()+j+1, aux.sequence.begin()+j+1+range);
 
-      bool improved = sequenceIsBetter(data, &aux, j, i+range);
+      bool improved = sequenceIsBetter(data, s, &aux, j, i+range-1);
+
       if(improved) {
         int delta = aux.accumulatedFine[aux.qtProductsWithFine-1] - initialValue;
         if(delta < bestDelta) {
@@ -313,6 +298,7 @@ bool Reinsertion(const Data* data, ProductionInfo *s, int range) {
 
 void LocalSearch(const Data *data, ProductionInfo *s) {
   vector<int> n = {1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+  // vector<int> n = {1, 3, 4, 5, 6};
   bool improved = false;
   while(!n.empty()) {
     int x = rand() % n.size();
@@ -366,6 +352,7 @@ void LocalSearch(const Data *data, ProductionInfo *s) {
     if(improved) {
       if(!s->accumulatedFine[s->qtProductsWithFine-1]) return;
       n = {1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+      // n = {1, 3, 4, 5, 6};
     } else {
       swap(n[x], n[n.size()-1]);
       n.pop_back();
@@ -375,7 +362,7 @@ void LocalSearch(const Data *data, ProductionInfo *s) {
 
 
 void Perturbacao(const Data *data, ProductionInfo *s) {
-  int tamMax = (int) data->getQtOrders() / 10;
+  int tamMax = (int) data->getQtOrders() / 8;
 
   int bloco1 = (rand() % (tamMax - 2)) + 3;
   int bloco2 = (rand() % (tamMax - 2)) + 3;
@@ -399,7 +386,7 @@ Solution ILS(const Data *data, int max_iter) {
   Solution bestSolution;
   bestSolution.fine = numeric_limits<int>::max();
   
-  int maxIterIls = 300;
+  int maxIterIls = 500;
 
   for(int i = 0; i < max_iter; i++) {
     ProductionInfo s = Guloso(data);
@@ -423,6 +410,8 @@ Solution ILS(const Data *data, int max_iter) {
       if(!bestSolution.fine) return bestSolution;
     }
   }
+
+  showSolution(&bestSolution);
 	return bestSolution;
 }
 
@@ -444,4 +433,11 @@ void showResult(ProductionInfo *s) {
   }
 
   cout << "\nCusto: " << s->accumulatedFine[s->accumulatedFine.size()-1] << "\n\n";
+}
+
+void showSolution(Solution *s) {
+  for(int i = 0; i < (int) s->sequence.size(); i++) {
+    cout << s->sequence[i] << " ";
+  }
+  cout << "\nCusto: " << s->fine << "\n\n";
 }
