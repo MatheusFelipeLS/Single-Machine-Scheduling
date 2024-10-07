@@ -21,7 +21,7 @@ struct ProductionInfo {
 };
 
 
-struct timeToInsert {
+struct fineToInsert {
   int node;
   int fine;
 };

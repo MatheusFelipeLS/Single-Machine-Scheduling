@@ -38,7 +38,7 @@ void attProductionInfo(const Data *data, ProductionInfo *s, int start) {
 }
 
 
-bool check(timeToInsert i, timeToInsert j) {
+bool check(fineToInsert i, fineToInsert j) {
   return i.fine > j.fine;
 }
 
@@ -49,7 +49,7 @@ ProductionInfo Guloso(const Data *data) {
   s.sequence = vector<int>(data->getQtOrders());
   s.accumulatedTime = vector<int>(data->getQtOrders());
   s.accumulatedFine = vector<int>(data->getQtOrders());
-  vector<timeToInsert> CL;
+  vector<fineToInsert> CL;
 
 
 
@@ -58,7 +58,7 @@ ProductionInfo Guloso(const Data *data) {
       s.qtProductsWithFine--;
       s.sequence[s.qtProductsWithFine] = i;
     } else {
-      timeToInsert v;
+      fineToInsert v;
       v.node = i;
       CL.push_back(v);
     }
@@ -402,7 +402,7 @@ void totalDestruction(const Data *data, ProductionInfo *s) {
 Solution ILS(const Data *data, int max_iter) {
   Solution bestSolution;
   bestSolution.fine = numeric_limits<int>::max();
-  int maxIterIls = 150;
+  int maxIterIls = 300;
 
 
   for(int i = 0; i < max_iter; i++) {
