@@ -23,7 +23,7 @@ struct ProductionInfo {
 
 struct timeToInsert {
   int node;
-  int time;
+  int fine;
 };
 
 
@@ -48,7 +48,7 @@ void calculatePenalties(const Data *data, ProductionInfo *s);
 void attProductionInfo(const Data *data, ProductionInfo *s, int start);
 bool sequenceIsBetter(const Data *data, ProductionInfo *s, int start, int stop);
 ProductionInfo Guloso(const Data *data);
-bool Swap(const Data*data, ProductionInfo *s);
+bool Swap(const Data*data, ProductionInfo *s, int range);
 bool Rotate(const Data*data, ProductionInfo *s);
 bool Reinsertion(const Data*data, ProductionInfo *s, int range);
 void LocalSearch(const Data *data, ProductionInfo *s);

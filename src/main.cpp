@@ -19,7 +19,7 @@ int main(int argc, char* argv[]) {
   Data data;
   time_t start, end;
   double media = 0;
-  int n = 1;
+  int n = 5;
   srand(time(NULL)+23879);
   ios_base::sync_with_stdio(false);
   data.readFromFile(argv[1]);
@@ -29,7 +29,7 @@ int main(int argc, char* argv[]) {
 
   start = clock();
   for(int cont = 0; cont < n; cont++) {
-    r = ILS(&data, 10);
+    r = ILS(&data, 50);
     media += r.fine;
   }
   end = clock();

@@ -4,13 +4,10 @@ make
 
 k=1
 for instance in instances/*; do
-	echo $instance >> ./output.txt
-
 	echo "Running $instance"
-	echo "Instance $k of 14" 
+	echo "Instance $k of 16" 
 
-	./apa ${instance} | awk "{print $1}" >> ./output.txt
-
+	./apa ${instance} | awk "{print $1}" >> ./results.txt
 	k=$(($k + 1))
 done
 
