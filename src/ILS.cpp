@@ -1,5 +1,6 @@
 #include "ILS.h"
 
+// O(n)
 void calculateTimes(const Data *data, ProductionInfo *s) {
   int currentTime = data->time(s->sequence[0]) + data->initialTime(s->sequence[0]);
   int i;
@@ -13,7 +14,7 @@ void calculateTimes(const Data *data, ProductionInfo *s) {
 }
 
 
-
+// O(n)
 void calculatePenalties(const Data *data, ProductionInfo *s) {
   s->accumulatedFine[0] = max(0, data->fine(s->sequence[0]) * (data->time(s->sequence[0]) - data->deadline(s->sequence[0])));
 
@@ -22,7 +23,7 @@ void calculatePenalties(const Data *data, ProductionInfo *s) {
   }
 }
 
-
+// O(n) no pior caso, O(1) no melhor
 void attProductionInfo(const Data *data, ProductionInfo *s, int start) {
   int i;
   if(!start) {
@@ -38,11 +39,12 @@ void attProductionInfo(const Data *data, ProductionInfo *s, int start) {
 }
 
 
+// O(1)
 bool check(fineToInsert i, fineToInsert j) {
   return i.fine > j.fine;
 }
 
-
+// O(n) no melhor caso, O(n²log(n))
 ProductionInfo Guloso(const Data *data) {
   ProductionInfo s;
   s.qtProductsWithFine = data->getQtOrders();
@@ -108,6 +110,7 @@ ProductionInfo Guloso(const Data *data) {
 }
 
 
+// O(n) no pior caso, O(1) no melhor
 //compara ProductionInfo em um determinado trecho e retorna true se a segunda for melhor, e false caso contrário
 bool sequenceIsBetter(const Data* data, const ProductionInfo *s1, ProductionInfo *s2, int start, int stop) {
   if(!start) {
@@ -143,6 +146,7 @@ bool sequenceIsBetter(const Data* data, const ProductionInfo *s1, ProductionInfo
 }
 
 
+// O(n³)
 bool Swap(const Data*data, ProductionInfo *s, int range) {
   int best_i = 0;
   int best_j = 0;
@@ -178,7 +182,7 @@ bool Swap(const Data*data, ProductionInfo *s, int range) {
   return false;
 }
 
-
+// O(n³)
 bool Rotate(const Data*data, ProductionInfo *s) {
   int best_i = 0;
   int best_j = 0;
@@ -213,6 +217,7 @@ bool Rotate(const Data*data, ProductionInfo *s) {
 }
 
 
+// O(n³)
 bool Reinsertion(const Data* data, ProductionInfo *s, int range) {
   int best_i = 0;
   int best_j = 0;
@@ -274,11 +279,10 @@ bool Reinsertion(const Data* data, ProductionInfo *s, int range) {
 
 vector<int> qtImproves = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
+// O(xn³)?? x é a quantidade de movimentos. TQV
 void LocalSearch(const Data *data, ProductionInfo *s) {
-  // vector<int> n = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19};
-  vector<int> n = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13};
+  vector<int> n = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14};
   bool improved = false;
-  // Rotate(data, s);
   while(!n.empty()) {
     int x = rand() % n.size();
     switch (n[x]) {
@@ -346,8 +350,7 @@ void LocalSearch(const Data *data, ProductionInfo *s) {
     if(improved) {
       if(!s->accumulatedFine[s->qtProductsWithFine-1]) return;
       qtImproves[n[x]]++;
-      // n = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19};
-      n = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13};
+      n = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14};
     } else {
       swap(n[x], n[n.size()-1]);
       n.pop_back();
@@ -355,7 +358,7 @@ void LocalSearch(const Data *data, ProductionInfo *s) {
   }
 }
 
-
+// O(n)
 void Perturbacao(const Data *data, ProductionInfo *s) {
   int tamMax = (int) data->getQtOrders() / 12;
 
@@ -376,14 +379,12 @@ void Perturbacao(const Data *data, ProductionInfo *s) {
 }
 
 
+// O(n)
 void totalDestruction(const Data *data, ProductionInfo *s) {
-  // random_shuffle(s->sequence.begin(), s->sequence.begin()+s->qtProductsWithFine);
-
-  // attProductionInfo(data, s, 0);
   int tamMax = (int) data->getQtOrders() / 6;
 
-  int bloco1 = (rand() % tamMax) + 2;
-  int bloco2 = (rand() % tamMax) + 2;
+  int bloco1 = (rand() % tamMax) + 4;
+  int bloco2 = (rand() % tamMax) + 4;
 
   int inicioDoBloco2 = (rand() % (s->qtProductsWithFine - bloco2 - bloco1 + 1)) + bloco1;
   int inicioDoBloco1 = (rand() % (inicioDoBloco2 - bloco1 + 1));
@@ -398,11 +399,11 @@ void totalDestruction(const Data *data, ProductionInfo *s) {
   attProductionInfo(data, s, inicioDoBloco1);
 }
 
-
+// O(n³)?
 Solution ILS(const Data *data, int max_iter) {
   Solution bestSolution;
   bestSolution.fine = numeric_limits<int>::max();
-  int maxIterIls = 300;
+  int maxIterIls = 400;
 
 
   for(int i = 0; i < max_iter; i++) {
