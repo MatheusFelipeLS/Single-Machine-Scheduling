@@ -275,9 +275,7 @@ bool Reinsertion(const Data* data, ProductionInfo *s, int range) {
   return false;
 }
 
-vector<int> qtImproves = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
-// O(xn³)?? x é a quantidade de movimentos. TQV
 void LocalSearch(const Data *data, ProductionInfo *s) {
   vector<int> n = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19};
   bool improved = false;
@@ -380,7 +378,7 @@ ProductionInfo Perturbacao1(const Data *data, ProductionInfo *s) {
   return PI;
 }
 
-
+// O(n)
 ProductionInfo Perturbacao2(const Data *data, ProductionInfo *s) {
   ProductionInfo PI = *s;
 
@@ -403,7 +401,6 @@ ProductionInfo Perturbacao2(const Data *data, ProductionInfo *s) {
   return PI;
 }
 
-// O(n³)?
 Solution ILS(const Data *data, int max_iter) {
   Solution bestSolution;
   bestSolution.fine = numeric_limits<int>::max();
