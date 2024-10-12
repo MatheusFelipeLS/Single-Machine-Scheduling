@@ -118,20 +118,18 @@ bool sequenceIsBetter(const Data* data, const ProductionInfo *s1, ProductionInfo
     s2->accumulatedFine[0] = max(0, data->fine(s2->sequence[0]) * (s2->accumulatedTime[0] - data->deadline(s2->sequence[0])));
     start++;
   } 
-
-  if(stop < s2->qtProductsWithFine-1) stop++;
   
   for(int i = start; i <= stop; i++) {
     s2->accumulatedTime[i] = s2->accumulatedTime[i-1] + data->timeToExchange(s2->sequence[i-1], s2->sequence[i]) + data->time(s2->sequence[i]);
     s2->accumulatedFine[i] = s2->accumulatedFine[i-1] + max(0, data->fine(s2->sequence[i]) * (s2->accumulatedTime[i] - data->deadline(s2->sequence[i])));
   }
-
-  if((s2->accumulatedTime[stop] > s1->accumulatedTime[stop]) && (s2->accumulatedFine[stop] >= s1->accumulatedFine[stop])) {
-    return false;
-  } else if((s2->accumulatedTime[stop] <= s1->accumulatedTime[stop]) && (s2->accumulatedFine[stop] <= s1->accumulatedFine[stop])) {
+ 
+  if((s2->accumulatedTime[stop] <= s1->accumulatedTime[stop]) && (s2->accumulatedFine[stop] <= s1->accumulatedFine[stop])) {
     attProductionInfo(data, s2, stop+1);
     return true;
   }
+
+  if(stop < s2->qtProductsWithFine-1) stop++;
 
   for(int i = stop; i < s2->qtProductsWithFine; i++) {
     s2->accumulatedTime[i] = s2->accumulatedTime[i-1] + data->timeToExchange(s2->sequence[i-1], s2->sequence[i]) + data->time(s2->sequence[i]);
@@ -281,7 +279,7 @@ vector<int> qtImproves = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
 
 // O(xn³)?? x é a quantidade de movimentos. TQV
 void LocalSearch(const Data *data, ProductionInfo *s) {
-  vector<int> n = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14};
+  vector<int> n = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19};
   bool improved = false;
   while(!n.empty()) {
     int x = rand() % n.size();
@@ -350,7 +348,7 @@ void LocalSearch(const Data *data, ProductionInfo *s) {
     if(improved) {
       if(!s->accumulatedFine[s->qtProductsWithFine-1]) return;
       qtImproves[n[x]]++;
-      n = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14};
+      n = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19};
     } else {
       swap(n[x], n[n.size()-1]);
       n.pop_back();
@@ -359,51 +357,57 @@ void LocalSearch(const Data *data, ProductionInfo *s) {
 }
 
 // O(n)
-void Perturbacao(const Data *data, ProductionInfo *s) {
+ProductionInfo Perturbacao1(const Data *data, ProductionInfo *s) {
+  ProductionInfo PI = *s;
+
   int tamMax = (int) data->getQtOrders() / 12;
 
   int bloco1 = (rand() % (tamMax - 1)) + 2;
   int bloco2 = (rand() % (tamMax - 1)) + 2;
 
-  int inicioDoBloco2 = (rand() % (s->qtProductsWithFine - bloco2 - bloco1 + 1)) + bloco1;
+  int inicioDoBloco2 = (rand() % (PI.qtProductsWithFine - bloco2 - bloco1 + 1)) + bloco1;
   int inicioDoBloco1 = (rand() % (inicioDoBloco2 - bloco1 + 1));
 
   swap_ranges(
-    s->sequence.begin() + inicioDoBloco1,   
-    s->sequence.begin() + inicioDoBloco1 + bloco1, 
-    s->sequence.begin() + inicioDoBloco2, 
-    s->sequence.begin() + inicioDoBloco2 + bloco2 
+    PI.sequence.begin() + inicioDoBloco1,   
+    PI.sequence.begin() + inicioDoBloco1 + bloco1, 
+    PI.sequence.begin() + inicioDoBloco2, 
+    PI.sequence.begin() + inicioDoBloco2 + bloco2 
   );
 
-  attProductionInfo(data, s, inicioDoBloco1);
+  attProductionInfo(data, &PI, inicioDoBloco1);
+
+  return PI;
 }
 
 
-// O(n)
-void totalDestruction(const Data *data, ProductionInfo *s) {
-  int tamMax = (int) data->getQtOrders() / 6;
+ProductionInfo Perturbacao2(const Data *data, ProductionInfo *s) {
+  ProductionInfo PI = *s;
 
-  int bloco1 = (rand() % tamMax) + 4;
-  int bloco2 = (rand() % tamMax) + 4;
+  int tamMax = data->getQtOrders() / 6;
+  int bloco1 = (rand() % (tamMax - 1)) + 4;
+  int bloco2 = (rand() % (tamMax - 1)) + 4;
 
-  int inicioDoBloco2 = (rand() % (s->qtProductsWithFine - bloco2 - bloco1 + 1)) + bloco1;
+  int inicioDoBloco2 = (rand() % (PI.qtProductsWithFine - bloco2 - bloco1 + 1)) + bloco1;
   int inicioDoBloco1 = (rand() % (inicioDoBloco2 - bloco1 + 1));
 
   swap_ranges(
-    s->sequence.begin() + inicioDoBloco1,   
-    s->sequence.begin() + inicioDoBloco1 + bloco1, 
-    s->sequence.begin() + inicioDoBloco2, 
-    s->sequence.begin() + inicioDoBloco2 + bloco2 
+    PI.sequence.begin() + inicioDoBloco1,   
+    PI.sequence.begin() + inicioDoBloco1 + bloco1, 
+    PI.sequence.begin() + inicioDoBloco2, 
+    PI.sequence.begin() + inicioDoBloco2 + bloco2 
   );
 
-  attProductionInfo(data, s, inicioDoBloco1);
+  attProductionInfo(data, &PI, inicioDoBloco1);
+
+  return PI;
 }
 
 // O(n³)?
 Solution ILS(const Data *data, int max_iter) {
   Solution bestSolution;
   bestSolution.fine = numeric_limits<int>::max();
-  int maxIterIls = 400;
+  int maxIterIls = 250;
 
 
   for(int i = 0; i < max_iter; i++) {
@@ -419,8 +423,12 @@ Solution ILS(const Data *data, int max_iter) {
         if(!s.accumulatedFine[s.qtProductsWithFine-1]) break;
       }
       
-      if(iterILS <= max_iter * 8 / 10) Perturbacao(data, &s);
-      else totalDestruction(data, &s);
+      if(iterILS % 2 == 0) {
+        s = Perturbacao1(data, &best);
+      } else {
+        s = Perturbacao2(data, &best);
+      } 
+
       iterILS++;
     }
     if(best.accumulatedFine[best.qtProductsWithFine-1] < bestSolution.fine) {
@@ -430,11 +438,6 @@ Solution ILS(const Data *data, int max_iter) {
     }
   }
 
-  for(int i = 0; i < (int) qtImproves.size(); i++) {
-    cout << i << ": " << qtImproves[i] << endl;
-  }
-
-  showSolution(&bestSolution);
 	return bestSolution;
 }
 

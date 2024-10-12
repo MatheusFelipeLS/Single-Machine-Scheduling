@@ -1,9 +1,6 @@
 #include <iostream>
-#include <algorithm>    
-#include <vector>
-#include <limits>
 #include <cmath>
-#include <bits/stdc++.h>
+#include <time.h>
 
 #include "Data.h"
 #include "ILS.h"
@@ -24,7 +21,6 @@ int main(int argc, char* argv[]) {
   ios_base::sync_with_stdio(false);
   data.readFromFile(argv[1]);
 
-  ProductionInfo s;
   Solution r;
 
   start = clock();
@@ -34,23 +30,11 @@ int main(int argc, char* argv[]) {
   }
   end = clock();
 
-  s.sequence = r.sequence;
-  s.accumulatedFine = vector<int>(s.sequence.size());
-  s.accumulatedTime = vector<int>(s.sequence.size());
-
-  calculateTimes(&data, &s);
-  calculatePenalties(&data, &s);
-
-
   cout << "Número de iterações: " << n << "\nMulta médio: " << media/n;
   double time_taken = double(end - start) / double(CLOCKS_PER_SEC);
   cout << "; Tempo médio: " << fixed 
       << time_taken/n << setprecision(5);
   cout << " sec " << endl << endl;
-
-
-  cout << "Confirmação do resultado\n";
-  showResult(&s);
 
   return 0;
 }
