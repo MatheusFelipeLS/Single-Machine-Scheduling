@@ -6,7 +6,6 @@
 #include <bits/stdc++.h>
 #include <time.h>
 
-
 #include "Data.h"
 
 using namespace std;
@@ -52,11 +51,11 @@ ProductionInfo Guloso(const Data *data);
 
 bool sequenceIsBetter(const Data *data, ProductionInfo *s, int start, int stop);
 bool Swap(const Data*data, ProductionInfo *s, int range);
-bool Rotate(const Data*data, ProductionInfo *s);
+bool BlockReversal(const Data*data, ProductionInfo *s);
 bool Reinsertion(const Data*data, ProductionInfo *s, int range);
 void LocalSearch(const Data *data, ProductionInfo *s);
 
-void Perturbacao1(const Data *data, ProductionInfo *s);
-void Perturbacao2(const Data *data, ProductionInfo *s);
+ProductionInfo Perturbacao1(const Data *data, ProductionInfo *s);
+ProductionInfo Perturbacao2(const Data *data, ProductionInfo *s);
 
 Solution ILS(const Data *data, int max_iter);

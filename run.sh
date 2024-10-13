@@ -11,4 +11,4 @@ for instance in instances/*; do
 	k=$(($k + 1))
 done
 
-echo "-" >> ./output.txt
+echo "-" >> ./results.txt

@@ -119,6 +119,8 @@ bool sequenceIsBetter(const Data* data, const ProductionInfo *s1, ProductionInfo
     start++;
   } 
   
+  if(stop < s2->qtProductsWithFine-1) stop++;
+  
   for(int i = start; i <= stop; i++) {
     s2->accumulatedTime[i] = s2->accumulatedTime[i-1] + data->timeToExchange(s2->sequence[i-1], s2->sequence[i]) + data->time(s2->sequence[i]);
     s2->accumulatedFine[i] = s2->accumulatedFine[i-1] + max(0, data->fine(s2->sequence[i]) * (s2->accumulatedTime[i] - data->deadline(s2->sequence[i])));
@@ -129,7 +131,6 @@ bool sequenceIsBetter(const Data* data, const ProductionInfo *s1, ProductionInfo
     return true;
   }
 
-  if(stop < s2->qtProductsWithFine-1) stop++;
 
   for(int i = stop; i < s2->qtProductsWithFine; i++) {
     s2->accumulatedTime[i] = s2->accumulatedTime[i-1] + data->timeToExchange(s2->sequence[i-1], s2->sequence[i]) + data->time(s2->sequence[i]);
@@ -181,7 +182,7 @@ bool Swap(const Data*data, ProductionInfo *s, int range) {
 }
 
 // O(n³)
-bool Rotate(const Data*data, ProductionInfo *s) {
+bool BlockReversal(const Data*data, ProductionInfo *s) {
   int best_i = 0;
   int best_j = 0;
   int bestDelta = 0;
@@ -283,7 +284,7 @@ void LocalSearch(const Data *data, ProductionInfo *s) {
     int x = rand() % n.size();
     switch (n[x]) {
       case 0:
-        improved = Rotate(data, s);
+        improved = BlockReversal(data, s);
         break;
       case 1:  
         improved = Reinsertion(data, s, 1);
@@ -345,7 +346,6 @@ void LocalSearch(const Data *data, ProductionInfo *s) {
     }
     if(improved) {
       if(!s->accumulatedFine[s->qtProductsWithFine-1]) return;
-      qtImproves[n[x]]++;
       n = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19};
     } else {
       swap(n[x], n[n.size()-1]);
