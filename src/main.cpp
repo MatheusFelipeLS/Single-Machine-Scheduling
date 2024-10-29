@@ -16,7 +16,7 @@ int main(int argc, char* argv[]) {
   Data data;
   time_t start, end;
   double media = 0;
-  int n = 1;
+  int n = 10;
   srand(time(NULL)+23879);
   ios_base::sync_with_stdio(false);
   data.readFromFile(argv[1]);
@@ -25,15 +25,14 @@ int main(int argc, char* argv[]) {
 
   start = clock();
   for(int cont = 0; cont < n; cont++) {
-    r = ILS(&data, 20);
+    r = ILS(&data, 20, 250);
     media += r.fine;
   }
   end = clock();
 
-  cout << "Número de iterações: " << n << "\nMulta médio: " << media/n;
+  cout << "Multa médio: " << media/n;
   double time_taken = double(end - start) / double(CLOCKS_PER_SEC);
-  cout << "; Tempo médio: " << fixed 
-      << time_taken/n << setprecision(5);
+  cout << "; Tempo médio: " << fixed << time_taken/n << setprecision(5);
   cout << " sec " << endl << endl;
 
   return 0;

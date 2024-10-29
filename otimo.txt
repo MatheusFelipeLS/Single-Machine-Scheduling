@@ -14,3 +14,6 @@ n60M = 516926
 n60N = 492572
 n60O = 527459 (Melhor valor encontrado. É possível que não seja o ótimo)
 n60P = 396183
+n200A = 2755259 (melhor encontrado)
+n300A = 9127140 (melhor encontrado)
+n400A = 16490984 (melhor encontrado)

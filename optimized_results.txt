@@ -1,0 +1,49 @@
+instances/n60A.txt
+Multa médio: 457.8; Tempo médio: 126.523396 sec 
+
+instances/n60B.txt
+Multa médio: 1757.8; Tempo médio: 144.086000 sec 
+
+instances/n60C.txt
+Multa médio: 0; Tempo médio: 0.450496 sec 
+
+instances/n60D.txt
+Multa médio: 69102; Tempo médio: 124.635202 sec 
+
+instances/n60E.txt
+Multa médio: 58935; Tempo médio: 111.962605 sec 
+
+instances/n60F.txt
+Multa médio: 93045; Tempo médio: 175.744327 sec 
+
+instances/n60G.txt
+Multa médio: 71118; Tempo médio: 103.230864 sec 
+
+instances/n60H.txt
+Multa médio: 145083; Tempo médio: 172.855534 sec 
+
+instances/n60I.txt
+Multa médio: 43286; Tempo médio: 150.984691 sec 
+
+instances/n60J.txt
+Multa médio: 53555; Tempo médio: 134.192730 sec 
+
+instances/n60K.txt
+Multa médio: 458752; Tempo médio: 170.741662 sec 
+
+instances/n60L.txt
+Multa médio: 332956; Tempo médio: 110.048103 sec 
+
+instances/n60M.txt
+Multa médio: 516956; Tempo médio: 152.739324 sec 
+
+instances/n60N.txt
+Multa médio: 492572; Tempo médio: 100.891517 sec 
+
+instances/n60O.txt
+Multa médio: 530601; Tempo médio: 119.739274 sec 
+
+instances/n60P.txt
+Multa médio: 396183; Tempo médio: 135.424863 sec 
+
+-
